@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="commerce_processguard" translate="label" type="text" sortOrder="910"
+                 showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>Process Guard</label>
+            <tab>advanced</tab>
+            <resource>Commerce_ProcessGuard::config</resource>
+
+            <group id="general" translate="label comment" type="text" sortOrder="10" showInDefault="1">
+                <label>Measurement</label>
+                <comment><![CDATA[Times the observers on the guarded events, plus totals collection,
+                    product saves and queue consumers. Measurement on its own changes nothing about what
+                    runs — see <strong>Enforcement</strong> for that. Reports go to
+                    <code>var/log/commerce/process_guard.log</code>.]]></comment>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" canRestore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+            </group>
+
+            <group id="enforcement" translate="label comment" type="text" sortOrder="20" showInDefault="1">
+                <label>Enforcement</label>
+                <comment><![CDATA[<strong>These settings change what runs in production.</strong>
+                    Run <code>bin/magento commerce:process-guard:policies</code> first: it lists every
+                    observer on every guarded event, so a decision here is taken against evidence rather
+                    than a guess about which listener matters.]]></comment>
+                <field id="disabled_observers" translate="label comment" type="textarea" sortOrder="10"
+                       showInDefault="1" canRestore="1">
+                    <label>Never Run These Observers</label>
+                    <comment><![CDATA[Comma-separated observer names from <code>events.xml</code>, or
+                        observer class names — either works, because whoever is reading a stack trace has
+                        the class and whoever is reading configuration has the name. This is the incident
+                        switch: it overrides everything else, including anything declared in code.]]></comment>
+                </field>
+                <field id="advisory_observers" translate="label comment" type="textarea" sortOrder="20"
+                       showInDefault="1" canRestore="1">
+                    <label>Advisory Observers</label>
+                    <comment><![CDATA[Declared non-essential: a failure is logged instead of thrown, and
+                        they are skipped when their event is over budget and shedding is on. Only put an
+                        observer here if you would not fail an order over it.]]></comment>
+                </field>
+                <field id="critical_observers" translate="label comment" type="textarea" sortOrder="30"
+                       showInDefault="1" canRestore="1">
+                    <label>Critical Observers</label>
+                    <comment><![CDATA[Never contained, never skipped, whatever else is configured. Adding a
+                        name here can only make the guard do less, so it is always the safe direction.]]></comment>
+                </field>
+                <field id="shedding_enabled" translate="label comment" type="select" sortOrder="40"
+                       showInDefault="1" canRestore="1">
+                    <label>Skip Advisory Observers Over Budget</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[With this off, an advisory observer's failure is still contained but
+                        it always runs. Note what this cannot do: PHP has no way to interrupt work already
+                        in progress, so a budget is enforced <em>between</em> observers and never inside
+                        one. It stops a bad path getting worse; it does not make a slow observer fast.]]></comment>
+                </field>
+            </group>
+
+            <group id="reporting" translate="label comment" type="text" sortOrder="30" showInDefault="1">
+                <label>Reporting</label>
+                <field id="summaries_enabled" translate="label comment" type="select" sortOrder="10"
+                       showInDefault="1" canRestore="1">
+                    <label>Log A Summary Per Process</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Off by default. Breaches are always logged; summaries are every
+                        process every time, which is most of the volume. Useful while you are calibrating
+                        budgets on staging, noisy in production.]]></comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

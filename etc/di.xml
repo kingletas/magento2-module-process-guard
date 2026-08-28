@@ -1,0 +1,173 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <preference for="Commerce\ProcessGuard\Api\ProcessGuardInterface"
+                type="Commerce\ProcessGuard\Model\Guard\ProcessGuard"/>
+    <preference for="Commerce\ProcessGuard\Api\ObserverPolicyResolverInterface"
+                type="Commerce\ProcessGuard\Model\Policy\ObserverPolicyResolver"/>
+    <preference for="Commerce\ProcessGuard\Api\ProcessJournalInterface"
+                type="Commerce\ProcessGuard\Model\Journal\RequestJournal"/>
+    <preference for="Commerce\ProcessGuard\Api\ProcessReporterInterface"
+                type="Commerce\ProcessGuard\Model\Report\LogReporter"/>
+    <preference for="Commerce\ProcessGuard\Api\ClockInterface"
+                type="Commerce\ProcessGuard\Model\Guard\Clock"/>
+
+    <!--
+        The config section id is an argument, not a constant, which is what
+        makes the module rebrandable: bin/rebrand rewrites this one string.
+    -->
+    <type name="Commerce\ProcessGuard\Model\Config">
+        <arguments>
+            <argument name="section" xsi:type="string">commerce_processguard</argument>
+        </arguments>
+    </type>
+
+    <!-- Its own log channel: a guard that writes into system.log is a guard nobody reads. -->
+    <virtualType name="Commerce\ProcessGuard\Logger\Handler" type="Commerce\Logger\Handler">
+        <arguments>
+            <argument name="fileName" xsi:type="string">process_guard.log</argument>
+            <argument name="subDirectory" xsi:type="string">commerce</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Commerce\ProcessGuard\Logger" type="Commerce\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">commerce_process_guard</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">Commerce\ProcessGuard\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Commerce\ProcessGuard\Model\Report\LogReporter">
+        <arguments>
+            <argument name="logger" xsi:type="object">Commerce\ProcessGuard\Logger</argument>
+        </arguments>
+    </type>
+
+    <!-- Budgets. -->
+    <virtualType name="Commerce\ProcessGuard\Model\Guard\OrderPlacementBudget"
+                 type="Commerce\ProcessGuard\Model\Guard\Budget">
+        <arguments>
+            <argument name="warnMilliseconds" xsi:type="number">1000</argument>
+            <argument name="tripMilliseconds" xsi:type="number">4000</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Commerce\ProcessGuard\Model\Guard\CatalogEventBudget"
+                 type="Commerce\ProcessGuard\Model\Guard\Budget">
+        <arguments>
+            <argument name="warnMilliseconds" xsi:type="number">750</argument>
+            <argument name="tripMilliseconds" xsi:type="number">3000</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Commerce\ProcessGuard\Model\Guard\TotalsBudget"
+                 type="Commerce\ProcessGuard\Model\Guard\Budget">
+        <arguments>
+            <argument name="warnMilliseconds" xsi:type="number">1500</argument>
+            <!--
+                No trip: a totals collection cannot be skipped, because the
+                answer would be wrong prices.
+            -->
+            <argument name="maxCalls" xsi:type="number">4</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Commerce\ProcessGuard\Model\Guard\ProductSaveBudget"
+                 type="Commerce\ProcessGuard\Model\Guard\Budget">
+        <arguments>
+            <argument name="warnMilliseconds" xsi:type="number">2000</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Commerce\ProcessGuard\Model\Guard\ConsumerBudget"
+                 type="Commerce\ProcessGuard\Model\Guard\Budget">
+        <arguments>
+            <argument name="warnMilliseconds" xsi:type="number">120000</argument>
+            <!-- 768MB. -->
+            <argument name="memoryBytes" xsi:type="number">805306368</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Commerce\ProcessGuard\Model\Guard\ProcessGuard">
+        <arguments>
+            <argument name="budgets" xsi:type="array">
+                <item name="event.sales_model_service_quote_submit_before" xsi:type="object">Commerce\ProcessGuard\Model\Guard\OrderPlacementBudget</item>
+                <item name="event.sales_model_service_quote_submit_success" xsi:type="object">Commerce\ProcessGuard\Model\Guard\OrderPlacementBudget</item>
+                <item name="event.sales_order_place_after" xsi:type="object">Commerce\ProcessGuard\Model\Guard\OrderPlacementBudget</item>
+                <item name="event.checkout_submit_all_after" xsi:type="object">Commerce\ProcessGuard\Model\Guard\OrderPlacementBudget</item>
+                <item name="event.catalog_product_save_before" xsi:type="object">Commerce\ProcessGuard\Model\Guard\CatalogEventBudget</item>
+                <item name="event.catalog_product_save_after" xsi:type="object">Commerce\ProcessGuard\Model\Guard\CatalogEventBudget</item>
+                <item name="quote.collect_totals" xsi:type="object">Commerce\ProcessGuard\Model\Guard\TotalsBudget</item>
+                <item name="catalog.product_save" xsi:type="object">Commerce\ProcessGuard\Model\Guard\ProductSaveBudget</item>
+                <item name="queue.consumer" xsi:type="object">Commerce\ProcessGuard\Model\Guard\ConsumerBudget</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!--
+        Which events are watched, and what is declared about the observers on
+        them.
+    -->
+    <type name="Commerce\ProcessGuard\Model\Policy\ObserverPolicyResolver">
+        <arguments>
+            <argument name="guardedEvents" xsi:type="array">
+                <item name="quote_submit_before" xsi:type="string">sales_model_service_quote_submit_before</item>
+                <item name="quote_submit_success" xsi:type="string">sales_model_service_quote_submit_success</item>
+                <item name="order_place_after" xsi:type="string">sales_order_place_after</item>
+                <item name="checkout_submit_all_after" xsi:type="string">checkout_submit_all_after</item>
+                <item name="checkout_cart_product_add_after" xsi:type="string">checkout_cart_product_add_after</item>
+                <item name="sales_quote_collect_totals_before" xsi:type="string">sales_quote_collect_totals_before</item>
+                <item name="sales_quote_collect_totals_after" xsi:type="string">sales_quote_collect_totals_after</item>
+                <item name="catalog_product_save_before" xsi:type="string">catalog_product_save_before</item>
+                <item name="catalog_product_save_after" xsi:type="string">catalog_product_save_after</item>
+            </argument>
+            <argument name="classifications" xsi:type="array"/>
+        </arguments>
+    </type>
+
+    <!-- The detail bound. Counts are unaffected; see ProcessJournalInterface. -->
+    <type name="Commerce\ProcessGuard\Model\Journal\RequestJournal">
+        <arguments>
+            <argument name="detailLimit" xsi:type="number">500</argument>
+        </arguments>
+    </type>
+
+    <!-- The gate. -->
+    <type name="Magento\Framework\Event\Invoker\InvokerDefault">
+        <plugin name="commerce_process_guard_observer_gate"
+                type="Commerce\ProcessGuard\Plugin\Event\GuardedInvoker"
+                sortOrder="10"/>
+    </type>
+    <type name="Magento\Quote\Model\Quote\TotalsCollector">
+        <plugin name="commerce_process_guard_totals"
+                type="Commerce\ProcessGuard\Plugin\Quote\GuardedTotalsCollector"
+                sortOrder="10"/>
+    </type>
+    <type name="Magento\Catalog\Api\ProductRepositoryInterface">
+        <plugin name="commerce_process_guard_product_save"
+                type="Commerce\ProcessGuard\Plugin\Catalog\GuardedProductSave"
+                sortOrder="10"/>
+    </type>
+    <!--
+        On the interface, because a monitor covering only some consumers means
+        nothing when silent.
+    -->
+    <type name="Magento\Framework\MessageQueue\ConsumerInterface">
+        <plugin name="commerce_process_guard_consumer"
+                type="Commerce\ProcessGuard\Plugin\MessageQueue\GuardedConsumer"
+                sortOrder="10"/>
+    </type>
+
+    <!-- The command name is wiring, so `bin/rebrand` rewrites it with the rest. -->
+    <type name="Commerce\ProcessGuard\Console\Command\ShowPoliciesCommand">
+        <arguments>
+            <argument name="name" xsi:type="string">commerce:process-guard:policies</argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="commerce_process_guard_policies" xsi:type="object">Commerce\ProcessGuard\Console\Command\ShowPoliciesCommand</item>
+            </argument>
+        </arguments>
+    </type>
+
+</config>

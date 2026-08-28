@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <commerce_processguard>
+            <general>
+                <!--
+                    Measurement is on, because with no observer classified
+                    every one of them still runs unchanged.
+                -->
+                <enabled>1</enabled>
+            </general>
+            <enforcement>
+                <!--
+                    Shedding is off, and turning it on is a decision to take
+                    after reading a report rather than a side effect of
+                    installing a module.
+                -->
+                <shedding_enabled>0</shedding_enabled>
+                <disabled_observers/>
+                <advisory_observers/>
+                <critical_observers/>
+            </enforcement>
+            <reporting>
+                <!--
+                    Off: on a busy storefront the per-process summaries are the
+                    bulk of the volume.
+                -->
+                <summaries_enabled>0</summaries_enabled>
+            </reporting>
+        </commerce_processguard>
+    </default>
+</config>
