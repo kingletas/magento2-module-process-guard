@@ -14,15 +14,15 @@ use PHPUnit\Framework\TestCase;
 /**
  * What a report says, and — more importantly — what it refuses to leave out.
  */
-final class ProcessReportTest extends TestCase
+class ProcessReportTest extends TestCase
 {
     public function testAnEmptyReportSaysSo(): void
     {
         $report = new ProcessReport();
 
-        self::assertTrue($report->isEmpty());
-        self::assertSame([], $report->getProcesses());
-        self::assertSame([], $report->getLines());
+        $this->assertTrue($report->isEmpty());
+        $this->assertSame([], $report->getProcesses());
+        $this->assertSame([], $report->getLines());
     }
 
     public function testTheMostExpensiveProcessComesFirst(): void
@@ -33,7 +33,7 @@ final class ProcessReportTest extends TestCase
             'middling' => $this->row(calls: 1, elapsed: 40_000_000),
         ]);
 
-        self::assertSame(['expensive', 'middling', 'cheap'], $report->getProcesses());
+        $this->assertSame(['expensive', 'middling', 'cheap'], $report->getProcesses());
     }
 
     /**
@@ -46,17 +46,17 @@ final class ProcessReportTest extends TestCase
             'slow' => $this->row(calls: 1, elapsed: 90_000_000),
         ]);
 
-        self::assertSame(['slow', 'busy'], $report->getProcesses());
+        $this->assertSame(['slow', 'busy'], $report->getProcesses());
     }
 
     public function testTimingsAreReportedInBothNanosecondsAndMilliseconds(): void
     {
         $report = new ProcessReport(['checkout' => $this->row(calls: 3, elapsed: 12_500_000, max: 9_000_000)]);
 
-        self::assertSame(3, $report->getCalls('checkout'));
-        self::assertSame(12_500_000, $report->getElapsedNanoseconds('checkout'));
-        self::assertSame(12.5, $report->getElapsedMilliseconds('checkout'));
-        self::assertSame(9_000_000, $report->getSlowestNanoseconds('checkout'));
+        $this->assertSame(3, $report->getCalls('checkout'));
+        $this->assertSame(12_500_000, $report->getElapsedNanoseconds('checkout'));
+        $this->assertSame(12.5, $report->getElapsedMilliseconds('checkout'));
+        $this->assertSame(9_000_000, $report->getSlowestNanoseconds('checkout'));
     }
 
     /**
@@ -66,11 +66,11 @@ final class ProcessReportTest extends TestCase
     {
         $report = new ProcessReport(['checkout' => $this->row()]);
 
-        self::assertSame(0, $report->getCalls('never-ran'));
-        self::assertSame(0, $report->getElapsedNanoseconds('never-ran'));
-        self::assertSame(0.0, $report->getElapsedMilliseconds('never-ran'));
-        self::assertSame(0, $report->getSlowestNanoseconds('never-ran'));
-        self::assertSame(0, $report->getOutcomeCount('never-ran', ObservationOutcome::Failed));
+        $this->assertSame(0, $report->getCalls('never-ran'));
+        $this->assertSame(0, $report->getElapsedNanoseconds('never-ran'));
+        $this->assertSame(0.0, $report->getElapsedMilliseconds('never-ran'));
+        $this->assertSame(0, $report->getSlowestNanoseconds('never-ran'));
+        $this->assertSame(0, $report->getOutcomeCount('never-ran', ObservationOutcome::Failed));
     }
 
     public function testOutcomeCountsAreReadableByOutcome(): void
@@ -82,9 +82,9 @@ final class ProcessReportTest extends TestCase
             ]),
         ]);
 
-        self::assertSame(4, $report->getOutcomeCount('checkout', ObservationOutcome::Completed));
-        self::assertSame(2, $report->getOutcomeCount('checkout', ObservationOutcome::Contained));
-        self::assertSame(0, $report->getOutcomeCount('checkout', ObservationOutcome::Shed));
+        $this->assertSame(4, $report->getOutcomeCount('checkout', ObservationOutcome::Completed));
+        $this->assertSame(2, $report->getOutcomeCount('checkout', ObservationOutcome::Contained));
+        $this->assertSame(0, $report->getOutcomeCount('checkout', ObservationOutcome::Shed));
     }
 
     /**
@@ -100,9 +100,9 @@ final class ProcessReportTest extends TestCase
 
         $lines = $report->getLines();
 
-        self::assertCount(1, $lines);
-        self::assertStringContainsString('checkout: 2 call(s), 4ms total, slowest 3ms', $lines[0]);
-        self::assertStringNotContainsString('completed', $lines[0]);
+        $this->assertCount(1, $lines);
+        $this->assertStringContainsString('checkout: 2 call(s), 4ms total, slowest 3ms', $lines[0]);
+        $this->assertStringNotContainsString('completed', $lines[0]);
     }
 
     public function testALineNamesEveryOutcomeThatIsNotACleanCompletion(): void
@@ -117,9 +117,9 @@ final class ProcessReportTest extends TestCase
 
         $line = $report->getLines()[0];
 
-        self::assertStringContainsString('1 contained', $line);
-        self::assertStringContainsString('2 over budget', $line);
-        self::assertStringNotContainsString('completed', $line);
+        $this->assertStringContainsString('1 contained', $line);
+        $this->assertStringContainsString('2 over budget', $line);
+        $this->assertStringNotContainsString('completed', $line);
     }
 
     /**
@@ -137,8 +137,8 @@ final class ProcessReportTest extends TestCase
 
         $line = $report->getLines()[0];
 
-        self::assertStringNotContainsString('shed', $line);
-        self::assertStringContainsString('1 failed', $line);
+        $this->assertStringNotContainsString('shed', $line);
+        $this->assertStringContainsString('1 failed', $line);
     }
 
     public function testTheArrayFormCarriesTheSameNumbersAsTheLines(): void
@@ -149,7 +149,7 @@ final class ProcessReportTest extends TestCase
             ]),
         ]);
 
-        self::assertSame(
+        $this->assertSame(
             [
                 'checkout' => [
                     'calls' => 3,
@@ -169,16 +169,16 @@ final class ProcessReportTest extends TestCase
     {
         $report = new ProcessReport(['checkout' => $this->row()], droppedDetail: 41);
 
-        self::assertSame(41, $report->getDroppedDetail());
-        self::assertSame(['observations_without_detail' => 41], $report->toArray()['_truncated']);
+        $this->assertSame(41, $report->getDroppedDetail());
+        $this->assertSame(['observations_without_detail' => 41], $report->toArray()['_truncated']);
     }
 
     public function testACompleteReportCarriesNoTruncationRow(): void
     {
         $report = new ProcessReport(['checkout' => $this->row()]);
 
-        self::assertSame(0, $report->getDroppedDetail());
-        self::assertArrayNotHasKey('_truncated', $report->toArray());
+        $this->assertSame(0, $report->getDroppedDetail());
+        $this->assertArrayNotHasKey('_truncated', $report->toArray());
     }
 
     /**

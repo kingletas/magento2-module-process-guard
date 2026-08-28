@@ -17,7 +17,7 @@ use Magento\Framework\MessageQueue\ConsumerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-final class GuardedConsumerTest extends TestCase
+class GuardedConsumerTest extends TestCase
 {
     private ProcessGuardInterface&MockObject $guard;
 
@@ -60,7 +60,7 @@ final class GuardedConsumerTest extends TestCase
             100
         );
 
-        self::assertTrue($processed);
+        $this->assertTrue($processed);
     }
 
     /**
@@ -77,7 +77,7 @@ final class GuardedConsumerTest extends TestCase
             100
         );
 
-        self::assertSame(['checkpoint', 'run'], $this->calls);
+        $this->assertSame(['checkpoint', 'run'], $this->calls);
     }
 
     public function testTheBatchSizeIsInTheReport(): void
@@ -86,7 +86,7 @@ final class GuardedConsumerTest extends TestCase
 
         $plugin->aroundProcess($this->createMock(ConsumerInterface::class), static fn (): bool => true, 250);
 
-        self::assertSame(250, $this->lastContext['batch']);
+        $this->assertSame(250, $this->lastContext['batch']);
     }
 
     public function testAnUnboundedRunIsReportedAsSuch(): void
@@ -95,7 +95,7 @@ final class GuardedConsumerTest extends TestCase
 
         $plugin->aroundProcess($this->createMock(ConsumerInterface::class), static fn (): bool => true);
 
-        self::assertNull($this->lastContext['batch']);
+        $this->assertNull($this->lastContext['batch']);
     }
 
     /**
@@ -107,7 +107,7 @@ final class GuardedConsumerTest extends TestCase
         $plugin = new GuardedConsumer($this->guard);
         $plugin->aroundProcess(new Interceptor(), static fn (): bool => true);
 
-        self::assertStringNotContainsString('Interceptor', (string) $this->lastContext['consumer']);
-        self::assertStringEndsWith('FakeConsumer', (string) $this->lastContext['consumer']);
+        $this->assertStringNotContainsString('Interceptor', (string) $this->lastContext['consumer']);
+        $this->assertStringEndsWith('FakeConsumer', (string) $this->lastContext['consumer']);
     }
 }

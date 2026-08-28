@@ -14,12 +14,12 @@ use PHPUnit\Framework\TestCase;
 /**
  * How a unit of work ended, and the two questions a report asks about it.
  */
-final class ObservationOutcomeTest extends TestCase
+class ObservationOutcomeTest extends TestCase
 {
     #[DataProvider('outcomesThatCostTime')]
     public function testAnOutcomeThatConsumedTimeCountsAsHavingRun(ObservationOutcome $outcome): void
     {
-        self::assertTrue($outcome->ran());
+        $this->assertTrue($outcome->ran());
     }
 
     /**
@@ -42,7 +42,7 @@ final class ObservationOutcomeTest extends TestCase
     #[DataProvider('outcomesThatWereSkipped')]
     public function testAnOutcomeThatNeverExecutedDoesNotCountAsHavingRun(ObservationOutcome $outcome): void
     {
-        self::assertFalse($outcome->ran());
+        $this->assertFalse($outcome->ran());
     }
 
     /**
@@ -65,7 +65,7 @@ final class ObservationOutcomeTest extends TestCase
             static fn (ObservationOutcome $outcome): bool => !$outcome->isNoteworthy()
         ));
 
-        self::assertSame([ObservationOutcome::Completed], $unremarkable);
+        $this->assertSame([ObservationOutcome::Completed], $unremarkable);
     }
 
     /**
@@ -73,11 +73,11 @@ final class ObservationOutcomeTest extends TestCase
      */
     public function testFailedAndContainedAreDistinctStates(): void
     {
-        self::assertNotSame(ObservationOutcome::Failed, ObservationOutcome::Contained);
-        self::assertTrue(ObservationOutcome::Failed->ran());
-        self::assertTrue(ObservationOutcome::Contained->ran());
-        self::assertTrue(ObservationOutcome::Failed->isNoteworthy());
-        self::assertTrue(ObservationOutcome::Contained->isNoteworthy());
+        $this->assertNotSame(ObservationOutcome::Failed, ObservationOutcome::Contained);
+        $this->assertTrue(ObservationOutcome::Failed->ran());
+        $this->assertTrue(ObservationOutcome::Contained->ran());
+        $this->assertTrue(ObservationOutcome::Failed->isNoteworthy());
+        $this->assertTrue(ObservationOutcome::Contained->isNoteworthy());
     }
 
     /**
@@ -86,8 +86,8 @@ final class ObservationOutcomeTest extends TestCase
      */
     public function testRepeatedIsReportedWithoutBeingCountedAsExecution(): void
     {
-        self::assertFalse(ObservationOutcome::Repeated->ran());
-        self::assertTrue(ObservationOutcome::Repeated->isNoteworthy());
+        $this->assertFalse(ObservationOutcome::Repeated->ran());
+        $this->assertTrue(ObservationOutcome::Repeated->isNoteworthy());
     }
 
     /**
@@ -95,7 +95,7 @@ final class ObservationOutcomeTest extends TestCase
      */
     public function testTheStoredValuesAreStable(): void
     {
-        self::assertSame(
+        $this->assertSame(
             [
                 'completed',
                 'failed',

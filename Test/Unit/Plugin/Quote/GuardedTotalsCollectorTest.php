@@ -19,7 +19,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
-final class GuardedTotalsCollectorTest extends TestCase
+class GuardedTotalsCollectorTest extends TestCase
 {
     private ProcessGuardInterface&MockObject $guard;
     private TotalsCollector&MockObject $subject;
@@ -52,7 +52,7 @@ final class GuardedTotalsCollectorTest extends TestCase
             $this->quote(42, 3)
         );
 
-        self::assertSame($total, $result);
+        $this->assertSame($total, $result);
     }
 
     public function testBothEntryPointsCountAsTheSameProcess(): void
@@ -63,7 +63,7 @@ final class GuardedTotalsCollectorTest extends TestCase
         $plugin->aroundCollect($this->subject, fn (): Total => $this->createMock(Total::class), $quote);
         $plugin->aroundCollectQuoteTotals($this->subject, static fn (): Quote => $quote, $quote);
 
-        self::assertSame(
+        $this->assertSame(
             [GuardedTotalsCollector::PROCESS, GuardedTotalsCollector::PROCESS],
             array_column($this->runs, 0),
             'Collecting twice by two routes is still collecting twice — which is the defect being counted.'
@@ -79,9 +79,9 @@ final class GuardedTotalsCollectorTest extends TestCase
 
         $plugin->aroundCollect($this->subject, fn (): Total => $this->createMock(Total::class), $this->quote(42, 14));
 
-        self::assertSame(42, $this->runs[0][1]['quote_id']);
-        self::assertSame(14, $this->runs[0][1]['items']);
-        self::assertStringContainsString('collect', (string) $this->runs[0][1]['label']);
+        $this->assertSame(42, $this->runs[0][1]['quote_id']);
+        $this->assertSame(14, $this->runs[0][1]['items']);
+        $this->assertStringContainsString('collect', (string) $this->runs[0][1]['label']);
     }
 
     public function testAFailureIsNotSwallowed(): void

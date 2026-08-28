@@ -18,7 +18,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-final class LogReporterTest extends TestCase
+class LogReporterTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;
 
@@ -47,7 +47,7 @@ final class LogReporterTest extends TestCase
         $this->report(ObservationOutcome::Failed);
         $this->report(ObservationOutcome::Contained);
 
-        self::assertSame(['error', 'error'], array_column($this->lines, 0));
+        $this->assertSame(['error', 'error'], array_column($this->lines, 0));
     }
 
     public function testABudgetBreachIsAWarning(): void
@@ -57,14 +57,14 @@ final class LogReporterTest extends TestCase
         $this->report(ObservationOutcome::Shed);
         $this->report(ObservationOutcome::MemoryCeiling);
 
-        self::assertSame(['warning', 'warning', 'warning', 'warning'], array_column($this->lines, 0));
+        $this->assertSame(['warning', 'warning', 'warning', 'warning'], array_column($this->lines, 0));
     }
 
     public function testAnObserverStayingSwitchedOffIsMerelyInformation(): void
     {
         $this->report(ObservationOutcome::Disabled);
 
-        self::assertSame('info', $this->lines[0][0]);
+        $this->assertSame('info', $this->lines[0][0]);
     }
 
     /**
@@ -75,7 +75,7 @@ final class LogReporterTest extends TestCase
     {
         $this->report(ObservationOutcome::Completed);
 
-        self::assertSame('debug', $this->lines[0][0]);
+        $this->assertSame('debug', $this->lines[0][0]);
     }
 
     public function testASummaryNamesTheProcessAndItsLines(): void
@@ -88,16 +88,16 @@ final class LogReporterTest extends TestCase
 
         $reporter->reportProcess($report, 'event.a');
 
-        self::assertSame('info', $this->lines[0][0]);
-        self::assertStringContainsString('event.a finished', $this->lines[0][1]);
-        self::assertStringContainsString('3ms', $this->lines[0][1]);
+        $this->assertSame('info', $this->lines[0][0]);
+        $this->assertStringContainsString('event.a finished', $this->lines[0][1]);
+        $this->assertStringContainsString('3ms', $this->lines[0][1]);
     }
 
     public function testAnEmptyReportIsNotLogged(): void
     {
         (new LogReporter($this->logger))->reportProcess(new ProcessReport(), 'event.a');
 
-        self::assertSame([], $this->lines);
+        $this->assertSame([], $this->lines);
     }
 
     private function report(ObservationOutcome $outcome): void

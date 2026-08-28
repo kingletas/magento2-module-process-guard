@@ -17,7 +17,7 @@ use RuntimeException;
 /**
  * The plugin is transparent: same return, same arguments, exceptions untouched.
  */
-final class GuardedProductSaveTest extends TestCase
+class GuardedProductSaveTest extends TestCase
 {
     public function testTheSavedProductIsReturnedUnchanged(): void
     {
@@ -30,7 +30,7 @@ final class GuardedProductSaveTest extends TestCase
             $product
         );
 
-        self::assertSame($saved, $result);
+        $this->assertSame($saved, $result);
     }
 
     /**
@@ -52,8 +52,8 @@ final class GuardedProductSaveTest extends TestCase
             true
         );
 
-        self::assertSame($product, $seen['product']);
-        self::assertTrue($seen['saveOptions']);
+        $this->assertSame($product, $seen['product']);
+        $this->assertTrue($seen['saveOptions']);
     }
 
     public function testSaveOptionsDefaultsToFalseAsTheRepositoryDoes(): void
@@ -70,7 +70,7 @@ final class GuardedProductSaveTest extends TestCase
             $this->product('SKU-1')
         );
 
-        self::assertFalse($seen);
+        $this->assertFalse($seen);
     }
 
     public function testTheSaveIsRunAsANamedProcess(): void
@@ -83,7 +83,7 @@ final class GuardedProductSaveTest extends TestCase
             $this->product('SKU-1')
         );
 
-        self::assertSame(GuardedProductSave::PROCESS, $guard->process());
+        $this->assertSame(GuardedProductSave::PROCESS, $guard->process());
     }
 
     /**
@@ -100,8 +100,8 @@ final class GuardedProductSaveTest extends TestCase
             $this->product('SKU-1')
         );
 
-        self::assertSame('SKU-1', $guard->context['sku']);
-        self::assertSame(GuardedProductSave::PROCESS, $guard->context['label']);
+        $this->assertSame('SKU-1', $guard->context['sku']);
+        $this->assertSame(GuardedProductSave::PROCESS, $guard->context['label']);
     }
 
     /**
@@ -120,7 +120,7 @@ final class GuardedProductSaveTest extends TestCase
             $product
         );
 
-        self::assertSame('', $guard->context['sku']);
+        $this->assertSame('', $guard->context['sku']);
     }
 
     /**

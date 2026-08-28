@@ -28,7 +28,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
-final class GuardedInvokerTest extends TestCase
+class GuardedInvokerTest extends TestCase
 {
     private const EVENT = 'sales_order_place_after';
     private const OBSERVER = 'vendor_analytics_order_ping';
@@ -81,7 +81,7 @@ final class GuardedInvokerTest extends TestCase
     {
         $this->invoke();
 
-        self::assertTrue($this->observerRan);
+        $this->assertTrue($this->observerRan);
     }
 
     /**
@@ -91,9 +91,9 @@ final class GuardedInvokerTest extends TestCase
     {
         $this->invoke(event: 'controller_action_predispatch');
 
-        self::assertTrue($this->observerRan);
-        self::assertSame([], $this->journal->getObservations());
-        self::assertSame([], $this->recorded);
+        $this->assertTrue($this->observerRan);
+        $this->assertSame([], $this->journal->getObservations());
+        $this->assertSame([], $this->recorded);
     }
 
     public function testDisabledMeasurementIsHandedStraightBack(): void
@@ -103,8 +103,8 @@ final class GuardedInvokerTest extends TestCase
 
         $this->invoke(config: $config);
 
-        self::assertTrue($this->observerRan);
-        self::assertSame([], $this->journal->getObservations());
+        $this->assertTrue($this->observerRan);
+        $this->assertSame([], $this->journal->getObservations());
     }
 
     public function testTheObserverIsTimedIntoTheEventsBudget(): void
@@ -113,8 +113,8 @@ final class GuardedInvokerTest extends TestCase
 
         $this->invoke();
 
-        self::assertSame([[self::PROCESS, 120 * 1_000_000]], $this->recorded);
-        self::assertSame(120.0, $this->journal->getObservations()[0]->getElapsedMilliseconds());
+        $this->assertSame([[self::PROCESS, 120 * 1_000_000]], $this->recorded);
+        $this->assertSame(120.0, $this->journal->getObservations()[0]->getElapsedMilliseconds());
     }
 
     public function testASlowObserverIsNamed(): void
@@ -125,9 +125,9 @@ final class GuardedInvokerTest extends TestCase
 
         $observation = $this->journal->getObservations()[0];
 
-        self::assertSame(ObservationOutcome::OverBudget, $observation->getOutcome());
-        self::assertSame(self::OBSERVER, $observation->getLabel());
-        self::assertSame(self::CLASS_NAME, $observation->getContext()['class']);
+        $this->assertSame(ObservationOutcome::OverBudget, $observation->getOutcome());
+        $this->assertSame(self::OBSERVER, $observation->getLabel());
+        $this->assertSame(self::CLASS_NAME, $observation->getContext()['class']);
     }
 
     public function testAnObserverInsideItsOwnBudgetIsJustRecorded(): void
@@ -136,7 +136,7 @@ final class GuardedInvokerTest extends TestCase
 
         $this->invoke(observerWarnMilliseconds: 250);
 
-        self::assertSame(ObservationOutcome::Completed, $this->journal->getObservations()[0]->getOutcome());
+        $this->assertSame(ObservationOutcome::Completed, $this->journal->getObservations()[0]->getOutcome());
     }
 
     /**
@@ -147,8 +147,8 @@ final class GuardedInvokerTest extends TestCase
     {
         $this->invoke(policy: ObserverPolicy::Disabled);
 
-        self::assertFalse($this->observerRan);
-        self::assertSame(ObservationOutcome::Disabled, $this->journal->getObservations()[0]->getOutcome());
+        $this->assertFalse($this->observerRan);
+        $this->assertSame(ObservationOutcome::Disabled, $this->journal->getObservations()[0]->getOutcome());
     }
 
     /**
@@ -179,8 +179,8 @@ final class GuardedInvokerTest extends TestCase
 
         $observation = $this->journal->getObservations()[0];
 
-        self::assertSame(ObservationOutcome::Failed, $observation->getOutcome());
-        self::assertSame('boom', $observation->getFailure());
+        $this->assertSame(ObservationOutcome::Failed, $observation->getOutcome());
+        $this->assertSame('boom', $observation->getFailure());
     }
 
     /**
@@ -193,8 +193,8 @@ final class GuardedInvokerTest extends TestCase
 
         $observation = $this->journal->getObservations()[0];
 
-        self::assertSame(ObservationOutcome::Contained, $observation->getOutcome());
-        self::assertSame('analytics endpoint down', $observation->getFailure());
+        $this->assertSame(ObservationOutcome::Contained, $observation->getOutcome());
+        $this->assertSame('analytics endpoint down', $observation->getFailure());
     }
 
     public function testAContainedFailureIsStillReportedAsAnError(): void
@@ -212,7 +212,7 @@ final class GuardedInvokerTest extends TestCase
             reporter: $reporter
         );
 
-        self::assertSame([ObservationOutcome::Contained], $reported);
+        $this->assertSame([ObservationOutcome::Contained], $reported);
     }
 
     public function testAdvisoryObserversAreShedOnlyWhenAllThreeConditionsHold(): void
@@ -223,7 +223,7 @@ final class GuardedInvokerTest extends TestCase
 
         $this->invoke(policy: ObserverPolicy::Advisory);
 
-        self::assertTrue($this->observerRan, 'Shedding off means it still runs.');
+        $this->assertTrue($this->observerRan, 'Shedding off means it still runs.');
 
         // Shedding on, but the path is inside its budget.
         $this->observerRan = false;
@@ -232,7 +232,7 @@ final class GuardedInvokerTest extends TestCase
 
         $this->invoke(policy: ObserverPolicy::Advisory);
 
-        self::assertTrue($this->observerRan, 'Within budget means it still runs.');
+        $this->assertTrue($this->observerRan, 'Within budget means it still runs.');
 
         // Both, and the observer is sheddable.
         $this->observerRan = false;
@@ -240,7 +240,7 @@ final class GuardedInvokerTest extends TestCase
 
         $this->invoke(policy: ObserverPolicy::Advisory);
 
-        self::assertFalse($this->observerRan);
+        $this->assertFalse($this->observerRan);
     }
 
     public function testAMeasuredObserverIsNeverShed(): void
@@ -250,7 +250,7 @@ final class GuardedInvokerTest extends TestCase
 
         $this->invoke(policy: ObserverPolicy::Measured);
 
-        self::assertTrue($this->observerRan);
+        $this->assertTrue($this->observerRan);
     }
 
     public function testACriticalObserverIsNeverShed(): void
@@ -260,7 +260,7 @@ final class GuardedInvokerTest extends TestCase
 
         $this->invoke(policy: ObserverPolicy::Critical);
 
-        self::assertTrue($this->observerRan);
+        $this->assertTrue($this->observerRan);
     }
 
     public function testAShedObserverIsRecordedAsShed(): void
@@ -270,7 +270,7 @@ final class GuardedInvokerTest extends TestCase
 
         $this->invoke(policy: ObserverPolicy::Advisory);
 
-        self::assertSame(ObservationOutcome::Shed, $this->journal->getObservations()[0]->getOutcome());
+        $this->assertSame(ObservationOutcome::Shed, $this->journal->getObservations()[0]->getOutcome());
     }
 
     public function testAnObserverWithNoEventIsHandedStraightBack(): void
@@ -286,15 +286,15 @@ final class GuardedInvokerTest extends TestCase
             $observer
         );
 
-        self::assertTrue($this->observerRan);
-        self::assertSame([], $this->journal->getObservations());
+        $this->assertTrue($this->observerRan);
+        $this->assertSame([], $this->journal->getObservations());
     }
 
     public function testAnObserverWithNoNameIsLabelledByItsClass(): void
     {
         $this->invoke(configuration: ['instance' => self::CLASS_NAME]);
 
-        self::assertSame(self::CLASS_NAME, $this->journal->getObservations()[0]->getLabel());
+        $this->assertSame(self::CLASS_NAME, $this->journal->getObservations()[0]->getLabel());
     }
 
     /**

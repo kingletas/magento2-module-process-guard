@@ -24,7 +24,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
-final class ProcessGuardTest extends TestCase
+class ProcessGuardTest extends TestCase
 {
     private const PROCESS = 'checkout.place_order';
 
@@ -64,7 +64,7 @@ final class ProcessGuardTest extends TestCase
 
     public function testReturnsWhateverTheWorkReturns(): void
     {
-        self::assertSame('result', $this->guard()->run(self::PROCESS, static fn (): string => 'result'));
+        $this->assertSame('result', $this->guard()->run(self::PROCESS, static fn (): string => 'result'));
     }
 
     /**
@@ -83,9 +83,9 @@ final class ProcessGuardTest extends TestCase
             [self::PROCESS => new Budget(warnMilliseconds: 1)]
         );
 
-        self::assertSame('result', $guard->run(self::PROCESS, static fn (): string => 'result'));
-        self::assertSame([], $this->journal->getObservations());
-        self::assertSame([], $this->reported);
+        $this->assertSame('result', $guard->run(self::PROCESS, static fn (): string => 'result'));
+        $this->assertSame([], $this->journal->getObservations());
+        $this->assertSame([], $this->reported);
     }
 
     /**
@@ -100,16 +100,16 @@ final class ProcessGuardTest extends TestCase
                 throw new RuntimeException('payment gateway timed out');
             });
 
-            self::fail('The exception must propagate.');
+            $this->fail('The exception must propagate.');
         } catch (RuntimeException $e) {
-            self::assertSame('payment gateway timed out', $e->getMessage());
+            $this->assertSame('payment gateway timed out', $e->getMessage());
         }
 
         $observation = $this->journal->getObservations()[0];
 
-        self::assertSame(ObservationOutcome::Failed, $observation->getOutcome());
-        self::assertSame('payment gateway timed out', $observation->getFailure());
-        self::assertCount(1, $this->reported);
+        $this->assertSame(ObservationOutcome::Failed, $observation->getOutcome());
+        $this->assertSame('payment gateway timed out', $observation->getFailure());
+        $this->assertCount(1, $this->reported);
     }
 
     public function testTimesTheWork(): void
@@ -118,7 +118,7 @@ final class ProcessGuardTest extends TestCase
 
         $this->guard()->run(self::PROCESS, static fn (): bool => true);
 
-        self::assertSame(250.0, $this->journal->getObservations()[0]->getElapsedMilliseconds());
+        $this->assertSame(250.0, $this->journal->getObservations()[0]->getElapsedMilliseconds());
     }
 
     /**
@@ -133,12 +133,12 @@ final class ProcessGuardTest extends TestCase
         $guard->run(self::PROCESS, static fn (): bool => true);
         $guard->run(self::PROCESS, static fn (): bool => true);
 
-        self::assertSame([], $this->reported, '600ms of a 700ms budget is not a breach.');
+        $this->assertSame([], $this->reported, '600ms of a 700ms budget is not a breach.');
 
         $guard->run(self::PROCESS, static fn (): bool => true);
 
-        self::assertCount(1, $this->reported);
-        self::assertSame(ObservationOutcome::OverBudget, $this->reported[0]->getOutcome());
+        $this->assertCount(1, $this->reported);
+        $this->assertSame(ObservationOutcome::OverBudget, $this->reported[0]->getOutcome());
     }
 
     /**
@@ -153,7 +153,7 @@ final class ProcessGuardTest extends TestCase
         $guard->run(self::PROCESS, static fn (): bool => true);
         $guard->run(self::PROCESS, static fn (): bool => true);
 
-        self::assertCount(1, $this->reported);
+        $this->assertCount(1, $this->reported);
     }
 
     public function testIsTrippedOnlyOnceTheTripBudgetIsPassed(): void
@@ -163,11 +163,11 @@ final class ProcessGuardTest extends TestCase
 
         $guard->run(self::PROCESS, static fn (): bool => true);
 
-        self::assertFalse($guard->isTripped(self::PROCESS));
+        $this->assertFalse($guard->isTripped(self::PROCESS));
 
         $guard->run(self::PROCESS, static fn (): bool => true);
 
-        self::assertTrue($guard->isTripped(self::PROCESS));
+        $this->assertTrue($guard->isTripped(self::PROCESS));
     }
 
     /**
@@ -180,8 +180,8 @@ final class ProcessGuardTest extends TestCase
 
         $guard->run('unbudgeted', static fn (): bool => true);
 
-        self::assertFalse($guard->isTripped('unbudgeted'));
-        self::assertSame([], $this->reported);
+        $this->assertFalse($guard->isTripped('unbudgeted'));
+        $this->assertSame([], $this->reported);
     }
 
     /**
@@ -195,13 +195,13 @@ final class ProcessGuardTest extends TestCase
         $guard->run(self::PROCESS, static fn (): bool => true);
         $guard->run(self::PROCESS, static fn (): bool => true);
 
-        self::assertSame([], $this->reported);
+        $this->assertSame([], $this->reported);
 
         $guard->run(self::PROCESS, static fn (): bool => true);
 
-        self::assertCount(1, $this->reported);
-        self::assertSame(ObservationOutcome::Repeated, $this->reported[0]->getOutcome());
-        self::assertStringContainsString('3 calls', $this->reported[0]->getLabel());
+        $this->assertCount(1, $this->reported);
+        $this->assertSame(ObservationOutcome::Repeated, $this->reported[0]->getOutcome());
+        $this->assertStringContainsString('3 calls', $this->reported[0]->getLabel());
     }
 
     public function testExternallyTimedWorkCountsTowardsTheSameBudget(): void
@@ -210,12 +210,12 @@ final class ProcessGuardTest extends TestCase
 
         $guard->record(self::PROCESS, 150 * 1_000_000, ['observer' => 'slow_one']);
 
-        self::assertCount(1, $this->reported);
-        self::assertFalse($guard->isTripped(self::PROCESS));
+        $this->assertCount(1, $this->reported);
+        $this->assertFalse($guard->isTripped(self::PROCESS));
 
         $guard->record(self::PROCESS, 100 * 1_000_000, ['observer' => 'another']);
 
-        self::assertTrue($guard->isTripped(self::PROCESS));
+        $this->assertTrue($guard->isTripped(self::PROCESS));
     }
 
     public function testACheckpointReportsAMemoryCeiling(): void
@@ -225,14 +225,14 @@ final class ProcessGuardTest extends TestCase
 
         $guard->checkpoint('queue.consumer');
 
-        self::assertSame([], $this->reported, 'The ceiling belongs to the budgeted process, not to another.');
+        $this->assertSame([], $this->reported, 'The ceiling belongs to the budgeted process, not to another.');
 
         $guard = $this->guard(new Budget(memoryBytes: 800 * 1024 * 1024));
         $guard->checkpoint(self::PROCESS, ['consumer' => 'inventory']);
 
-        self::assertCount(1, $this->reported);
-        self::assertSame(ObservationOutcome::MemoryCeiling, $this->reported[0]->getOutcome());
-        self::assertSame('inventory', $this->reported[0]->getContext()['consumer']);
+        $this->assertCount(1, $this->reported);
+        $this->assertSame(ObservationOutcome::MemoryCeiling, $this->reported[0]->getOutcome());
+        $this->assertSame('inventory', $this->reported[0]->getContext()['consumer']);
     }
 
     public function testAMemoryCeilingIsReportedOnce(): void
@@ -244,7 +244,7 @@ final class ProcessGuardTest extends TestCase
         $guard->checkpoint(self::PROCESS);
         $guard->checkpoint(self::PROCESS);
 
-        self::assertCount(1, $this->reported);
+        $this->assertCount(1, $this->reported);
     }
 
     public function testACheckpointOnAnUnbudgetedProcessDoesNothing(): void
@@ -253,7 +253,7 @@ final class ProcessGuardTest extends TestCase
 
         $this->guard()->checkpoint('unbudgeted');
 
-        self::assertSame([], $this->reported);
+        $this->assertSame([], $this->reported);
     }
 
     public function testASummaryIsEmittedWhenTheOutermostRunCloses(): void
@@ -275,14 +275,14 @@ final class ProcessGuardTest extends TestCase
             return true;
         });
 
-        self::assertSame(['inner', self::PROCESS], $this->summarised);
+        $this->assertSame(['inner', self::PROCESS], $this->summarised);
     }
 
     public function testNoSummaryWhenSummariesAreOff(): void
     {
         $this->guard()->run(self::PROCESS, static fn (): bool => true);
 
-        self::assertSame([], $this->summarised);
+        $this->assertSame([], $this->summarised);
     }
 
     public function testTheReportComesFromTheJournal(): void
@@ -292,8 +292,8 @@ final class ProcessGuardTest extends TestCase
         $guard = $this->guard();
         $guard->run(self::PROCESS, static fn (): bool => true);
 
-        self::assertSame(1, $guard->getReport()->getCalls(self::PROCESS));
-        self::assertSame(40.0, $guard->getReport()->getElapsedMilliseconds(self::PROCESS));
+        $this->assertSame(1, $guard->getReport()->getCalls(self::PROCESS));
+        $this->assertSame(40.0, $guard->getReport()->getElapsedMilliseconds(self::PROCESS));
     }
 
     private function guard(?Budget $budget = null): ProcessGuard

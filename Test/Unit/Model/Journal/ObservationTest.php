@@ -14,20 +14,20 @@ use Commerce\ProcessGuard\Model\Journal\Observation;
 use Commerce\ProcessGuard\Model\Journal\ObservationOutcome;
 use PHPUnit\Framework\TestCase;
 
-final class ObservationTest extends TestCase
+class ObservationTest extends TestCase
 {
     public function testNanosecondsAreReportedInMilliseconds(): void
     {
         $observation = new Observation(ObservationOutcome::Completed, 'event.a', 'observer', 1_500_000);
 
-        self::assertSame(1.5, $observation->getElapsedMilliseconds());
+        $this->assertSame(1.5, $observation->getElapsedMilliseconds());
     }
 
     public function testNegativeTimeIsImpossible(): void
     {
         $observation = new Observation(ObservationOutcome::Completed, 'event.a', 'observer', -5);
 
-        self::assertSame(0, $observation->getElapsedNanoseconds());
+        $this->assertSame(0, $observation->getElapsedNanoseconds());
     }
 
     /**
@@ -38,10 +38,10 @@ final class ObservationTest extends TestCase
         $failed = new Observation(ObservationOutcome::Failed, 'event.a', 'obs', 0, [], 'boom');
         $contained = new Observation(ObservationOutcome::Contained, 'event.a', 'obs', 0, [], 'boom');
 
-        self::assertStringContainsString('left to propagate', $failed->getMessage());
-        self::assertStringContainsString('contained', $contained->getMessage());
-        self::assertStringContainsString('advisory', $contained->getMessage());
-        self::assertStringContainsString('boom', $contained->getMessage());
+        $this->assertStringContainsString('left to propagate', $failed->getMessage());
+        $this->assertStringContainsString('contained', $contained->getMessage());
+        $this->assertStringContainsString('advisory', $contained->getMessage());
+        $this->assertStringContainsString('boom', $contained->getMessage());
     }
 
     public function testEveryOutcomeHasAMessageThatNamesTheProcessAndTheUnit(): void
@@ -49,8 +49,8 @@ final class ObservationTest extends TestCase
         foreach (ObservationOutcome::cases() as $outcome) {
             $observation = new Observation($outcome, 'event.place_order', 'vendor_ping', 1_000_000);
 
-            self::assertStringContainsString('event.place_order', $observation->getMessage(), $outcome->value);
-            self::assertStringContainsString('vendor_ping', $observation->getMessage(), $outcome->value);
+            $this->assertStringContainsString('event.place_order', $observation->getMessage(), $outcome->value);
+            $this->assertStringContainsString('vendor_ping', $observation->getMessage(), $outcome->value);
         }
     }
 
@@ -58,7 +58,7 @@ final class ObservationTest extends TestCase
     {
         $observation = new Observation(ObservationOutcome::Failed, 'event.a', 'obs', 0, [], null);
 
-        self::assertStringContainsString('no message', $observation->getMessage());
+        $this->assertStringContainsString('no message', $observation->getMessage());
     }
 
     public function testContextIsCarriedIntoTheLogPayload(): void
@@ -73,10 +73,10 @@ final class ObservationTest extends TestCase
 
         $payload = $observation->toArray();
 
-        self::assertSame('over_budget', $payload['outcome']);
-        self::assertSame(2.0, $payload['ms']);
-        self::assertSame('sales_order_place_after', $payload['event']);
-        self::assertSame('Vendor\Observer', $payload['class']);
+        $this->assertSame('over_budget', $payload['outcome']);
+        $this->assertSame(2.0, $payload['ms']);
+        $this->assertSame('sales_order_place_after', $payload['event']);
+        $this->assertSame('Vendor\Observer', $payload['class']);
     }
 
     /**
@@ -85,21 +85,21 @@ final class ObservationTest extends TestCase
      */
     public function testSkippedOutcomesDoNotCountAsHavingRun(): void
     {
-        self::assertFalse(ObservationOutcome::Shed->ran());
-        self::assertFalse(ObservationOutcome::Disabled->ran());
-        self::assertFalse(ObservationOutcome::Repeated->ran());
-        self::assertFalse(ObservationOutcome::MemoryCeiling->ran());
-        self::assertTrue(ObservationOutcome::Completed->ran());
-        self::assertTrue(ObservationOutcome::Contained->ran());
+        $this->assertFalse(ObservationOutcome::Shed->ran());
+        $this->assertFalse(ObservationOutcome::Disabled->ran());
+        $this->assertFalse(ObservationOutcome::Repeated->ran());
+        $this->assertFalse(ObservationOutcome::MemoryCeiling->ran());
+        $this->assertTrue(ObservationOutcome::Completed->ran());
+        $this->assertTrue(ObservationOutcome::Contained->ran());
     }
 
     public function testOnlyARoutineCompletionIsUnremarkable(): void
     {
-        self::assertFalse(ObservationOutcome::Completed->isNoteworthy());
+        $this->assertFalse(ObservationOutcome::Completed->isNoteworthy());
 
         foreach (ObservationOutcome::cases() as $outcome) {
             if ($outcome !== ObservationOutcome::Completed) {
-                self::assertTrue($outcome->isNoteworthy(), $outcome->value);
+                $this->assertTrue($outcome->isNoteworthy(), $outcome->value);
             }
         }
     }

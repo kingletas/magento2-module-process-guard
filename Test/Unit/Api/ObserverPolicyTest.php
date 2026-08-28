@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * The four states, and what each one permits.
  */
-final class ObserverPolicyTest extends TestCase
+class ObserverPolicyTest extends TestCase
 {
     /**
      * The safe default.
@@ -23,9 +23,9 @@ final class ObserverPolicyTest extends TestCase
     {
         $measured = ObserverPolicy::Measured;
 
-        self::assertFalse($measured->containsFailures());
-        self::assertFalse($measured->isSheddable());
-        self::assertTrue($measured->runs());
+        $this->assertFalse($measured->containsFailures());
+        $this->assertFalse($measured->isSheddable());
+        $this->assertTrue($measured->runs());
     }
 
     public function testOnlyAdvisoryAllowsAFailureToBeContained(): void
@@ -35,7 +35,7 @@ final class ObserverPolicyTest extends TestCase
             static fn (ObserverPolicy $policy): bool => $policy->containsFailures()
         ));
 
-        self::assertSame([ObserverPolicy::Advisory], $containing);
+        $this->assertSame([ObserverPolicy::Advisory], $containing);
     }
 
     public function testOnlyAdvisoryAllowsAnObserverToBeShed(): void
@@ -45,7 +45,7 @@ final class ObserverPolicyTest extends TestCase
             static fn (ObserverPolicy $policy): bool => $policy->isSheddable()
         ));
 
-        self::assertSame([ObserverPolicy::Advisory], $sheddable);
+        $this->assertSame([ObserverPolicy::Advisory], $sheddable);
     }
 
     /**
@@ -55,9 +55,9 @@ final class ObserverPolicyTest extends TestCase
     {
         $critical = ObserverPolicy::Critical;
 
-        self::assertFalse($critical->containsFailures());
-        self::assertFalse($critical->isSheddable());
-        self::assertTrue($critical->runs());
+        $this->assertFalse($critical->containsFailures());
+        $this->assertFalse($critical->isSheddable());
+        $this->assertTrue($critical->runs());
     }
 
     public function testOnlyDisabledStopsAnObserverRunning(): void
@@ -67,7 +67,7 @@ final class ObserverPolicyTest extends TestCase
             static fn (ObserverPolicy $policy): bool => !$policy->runs()
         ));
 
-        self::assertSame([ObserverPolicy::Disabled], $notRunning);
+        $this->assertSame([ObserverPolicy::Disabled], $notRunning);
     }
 
     /**
@@ -77,7 +77,7 @@ final class ObserverPolicyTest extends TestCase
     #[DataProvider('configurationValues')]
     public function testTheConfigurationValueIsStable(string $value, ObserverPolicy $expected): void
     {
-        self::assertSame($expected, ObserverPolicy::from($value));
+        $this->assertSame($expected, ObserverPolicy::from($value));
     }
 
     /**
@@ -95,7 +95,7 @@ final class ObserverPolicyTest extends TestCase
 
     public function testThereAreExactlyFourStates(): void
     {
-        self::assertCount(
+        $this->assertCount(
             4,
             ObserverPolicy::cases(),
             'A fifth state needs a decision about containment and shedding, so it needs a test here too.'

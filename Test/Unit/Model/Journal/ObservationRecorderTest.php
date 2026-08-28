@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * One rule, in one place: journal everything, report only what matters.
  */
-final class ObservationRecorderTest extends TestCase
+class ObservationRecorderTest extends TestCase
 {
     public function testEveryObservationIsJournalledWhateverItsOutcome(): void
     {
@@ -30,7 +30,7 @@ final class ObservationRecorderTest extends TestCase
             $recorder->record($this->observation($outcome));
         }
 
-        self::assertCount(count(ObservationOutcome::cases()), $journal->recorded);
+        $this->assertCount(count(ObservationOutcome::cases()), $journal->recorded);
     }
 
     /**
@@ -44,8 +44,8 @@ final class ObservationRecorderTest extends TestCase
         (new ObservationRecorder($journal, $reporter))
             ->record($this->observation(ObservationOutcome::Completed));
 
-        self::assertCount(1, $journal->recorded);
-        self::assertSame([], $reporter->observations);
+        $this->assertCount(1, $journal->recorded);
+        $this->assertSame([], $reporter->observations);
     }
 
     #[DataProvider('noteworthyOutcomes')]
@@ -56,8 +56,8 @@ final class ObservationRecorderTest extends TestCase
 
         (new ObservationRecorder($journal, $reporter))->record($this->observation($outcome));
 
-        self::assertCount(1, $journal->recorded);
-        self::assertCount(1, $reporter->observations);
+        $this->assertCount(1, $journal->recorded);
+        $this->assertCount(1, $reporter->observations);
     }
 
     /**
@@ -95,7 +95,7 @@ final class ObservationRecorderTest extends TestCase
         (new ObservationRecorder($journal, $reporter))
             ->record($this->observation(ObservationOutcome::OverBudget));
 
-        self::assertSame(['journal', 'reporter'], $order);
+        $this->assertSame(['journal', 'reporter'], $order);
     }
 
     public function testSummarisingHandsTheReportAndTheProcessNameToTheReporter(): void
@@ -105,14 +105,14 @@ final class ObservationRecorderTest extends TestCase
 
         (new ObservationRecorder($this->journal(report: $report), $reporter))->summarise('checkout');
 
-        self::assertSame([['report' => $report, 'process' => 'checkout']], $reporter->processes);
+        $this->assertSame([['report' => $report, 'process' => 'checkout']], $reporter->processes);
     }
 
     public function testTheReportComesFromTheJournal(): void
     {
         $report = new ProcessReport();
 
-        self::assertSame(
+        $this->assertSame(
             $report,
             (new ObservationRecorder($this->journal(report: $report), $this->reporter()))->getReport()
         );

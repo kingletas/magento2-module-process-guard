@@ -16,7 +16,7 @@ use Commerce\ProcessGuard\Model\Policy\ObserverPolicyResolver;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-final class ObserverPolicyResolverTest extends TestCase
+class ObserverPolicyResolverTest extends TestCase
 {
     private const EVENT = 'sales_order_place_after';
     private const OBSERVER = 'vendor_analytics_order_ping';
@@ -40,7 +40,7 @@ final class ObserverPolicyResolverTest extends TestCase
     {
         $resolver = $this->resolver();
 
-        self::assertSame(
+        $this->assertSame(
             ObserverPolicy::Measured,
             $resolver->resolve(self::EVENT, self::OBSERVER, self::CLASS_NAME)
         );
@@ -50,7 +50,7 @@ final class ObserverPolicyResolverTest extends TestCase
     {
         $resolver = $this->resolver(classifications: [self::OBSERVER => 'advisory']);
 
-        self::assertSame(
+        $this->assertSame(
             ObserverPolicy::Advisory,
             $resolver->resolve(self::EVENT, self::OBSERVER, self::CLASS_NAME)
         );
@@ -60,7 +60,7 @@ final class ObserverPolicyResolverTest extends TestCase
     {
         $resolver = $this->resolver(classifications: [self::CLASS_NAME => 'critical']);
 
-        self::assertSame(
+        $this->assertSame(
             ObserverPolicy::Critical,
             $resolver->resolve(self::EVENT, self::OBSERVER, self::CLASS_NAME)
         );
@@ -79,7 +79,7 @@ final class ObserverPolicyResolverTest extends TestCase
 
         $resolver = $this->resolver(classifications: [self::OBSERVER => 'critical']);
 
-        self::assertSame(
+        $this->assertSame(
             ObserverPolicy::Disabled,
             $resolver->resolve(self::EVENT, self::OBSERVER, self::CLASS_NAME)
         );
@@ -96,7 +96,7 @@ final class ObserverPolicyResolverTest extends TestCase
         $this->config->method('getAdvisoryObservers')->willReturn([]);
         $this->config->method('getCriticalObservers')->willReturn([]);
 
-        self::assertSame(
+        $this->assertSame(
             ObserverPolicy::Disabled,
             $this->resolver()->resolve(self::EVENT, self::OBSERVER, self::CLASS_NAME)
         );
@@ -113,7 +113,7 @@ final class ObserverPolicyResolverTest extends TestCase
         $this->config->method('getCriticalObservers')->willReturn([self::OBSERVER]);
         $this->config->method('getAdvisoryObservers')->willReturn([self::OBSERVER]);
 
-        self::assertSame(
+        $this->assertSame(
             ObserverPolicy::Critical,
             $this->resolver(classifications: [self::OBSERVER => 'advisory'])
                 ->resolve(self::EVENT, self::OBSERVER, self::CLASS_NAME)
@@ -127,7 +127,7 @@ final class ObserverPolicyResolverTest extends TestCase
         $this->config->method('getCriticalObservers')->willReturn([]);
         $this->config->method('getAdvisoryObservers')->willReturn([self::OBSERVER]);
 
-        self::assertSame(
+        $this->assertSame(
             ObserverPolicy::Advisory,
             $this->resolver()->resolve(self::EVENT, self::OBSERVER, self::CLASS_NAME)
         );
@@ -141,7 +141,7 @@ final class ObserverPolicyResolverTest extends TestCase
     {
         $resolver = $this->resolver(classifications: [self::OBSERVER => 'advisery']);
 
-        self::assertSame(
+        $this->assertSame(
             ObserverPolicy::Measured,
             $resolver->resolve(self::EVENT, self::OBSERVER, self::CLASS_NAME)
         );
@@ -151,15 +151,15 @@ final class ObserverPolicyResolverTest extends TestCase
     {
         $resolver = $this->resolver(classifications: ['' => 'disabled']);
 
-        self::assertSame(ObserverPolicy::Measured, $resolver->resolve(self::EVENT, '', ''));
+        $this->assertSame(ObserverPolicy::Measured, $resolver->resolve(self::EVENT, '', ''));
     }
 
     public function testOnlyDeclaredEventsAreGuarded(): void
     {
         $resolver = $this->resolver(events: ['sales_order_place_after']);
 
-        self::assertTrue($resolver->isGuardedEvent('sales_order_place_after'));
-        self::assertFalse($resolver->isGuardedEvent('controller_action_predispatch'));
+        $this->assertTrue($resolver->isGuardedEvent('sales_order_place_after'));
+        $this->assertFalse($resolver->isGuardedEvent('controller_action_predispatch'));
     }
 
     /**
@@ -170,16 +170,16 @@ final class ObserverPolicyResolverTest extends TestCase
     {
         $resolver = $this->resolver(events: [' Sales_Order_Place_After ']);
 
-        self::assertTrue($resolver->isGuardedEvent('sales_order_place_after'));
-        self::assertSame(['sales_order_place_after'], $resolver->getGuardedEvents());
+        $this->assertTrue($resolver->isGuardedEvent('sales_order_place_after'));
+        $this->assertSame(['sales_order_place_after'], $resolver->getGuardedEvents());
     }
 
     public function testNoGuardedEventsMeansNothingIsGuarded(): void
     {
         $resolver = $this->resolver(events: []);
 
-        self::assertFalse($resolver->isGuardedEvent(self::EVENT));
-        self::assertSame([], $resolver->getGuardedEvents());
+        $this->assertFalse($resolver->isGuardedEvent(self::EVENT));
+        $this->assertSame([], $resolver->getGuardedEvents());
     }
 
     /**

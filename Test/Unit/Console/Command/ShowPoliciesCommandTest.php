@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
-final class ShowPoliciesCommandTest extends TestCase
+class ShowPoliciesCommandTest extends TestCase
 {
     private const EVENT = 'sales_order_place_after';
 
@@ -75,13 +75,13 @@ final class ShowPoliciesCommandTest extends TestCase
         $tester = $this->runCommand();
         $output = $tester->getDisplay();
 
-        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
-        self::assertStringContainsString(self::EVENT, $output);
-        self::assertStringContainsString('analytics_ping', $output);
-        self::assertStringContainsString('Vendor\Inventory\Observer\Reserve', $output);
-        self::assertStringContainsString('contain failures', $output);
-        self::assertStringContainsString('never skip or contain', $output);
-        self::assertStringContainsString('2 observer(s)', $output);
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertStringContainsString(self::EVENT, $output);
+        $this->assertStringContainsString('analytics_ping', $output);
+        $this->assertStringContainsString('Vendor\Inventory\Observer\Reserve', $output);
+        $this->assertStringContainsString('contain failures', $output);
+        $this->assertStringContainsString('never skip or contain', $output);
+        $this->assertStringContainsString('2 observer(s)', $output);
     }
 
     /**
@@ -92,22 +92,22 @@ final class ShowPoliciesCommandTest extends TestCase
     {
         $this->runCommand(['--area' => 'frontend']);
 
-        self::assertSame(['frontend'], $this->scopes);
+        $this->assertSame(['frontend'], $this->scopes);
     }
 
     public function testAnUnknownAreaIsRefusedWithTheListOfRealOnes(): void
     {
         $tester = $this->runCommand(['--area' => 'storefront']);
 
-        self::assertSame(Command::INVALID, $tester->getStatusCode());
-        self::assertStringContainsString('adminhtml', $tester->getDisplay());
+        $this->assertSame(Command::INVALID, $tester->getStatusCode());
+        $this->assertStringContainsString('adminhtml', $tester->getDisplay());
     }
 
     public function testTheDefaultAreaIsGlobal(): void
     {
         $this->runCommand();
 
-        self::assertSame(['global'], $this->scopes);
+        $this->assertSame(['global'], $this->scopes);
     }
 
     /**
@@ -122,7 +122,7 @@ final class ShowPoliciesCommandTest extends TestCase
 
         $tester = $this->runCommand(config: $config);
 
-        self::assertStringContainsString('switched off', $tester->getDisplay());
+        $this->assertStringContainsString('switched off', $tester->getDisplay());
     }
 
     public function testItReportsWhenNothingIsGuarded(): void
@@ -132,9 +132,9 @@ final class ShowPoliciesCommandTest extends TestCase
 
         $tester = $this->runCommand(resolver: $resolver);
 
-        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
-        self::assertStringContainsString('No events are guarded', $tester->getDisplay());
-        self::assertSame([], $this->scopes, 'Nothing to list means nothing to read.');
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertStringContainsString('No events are guarded', $tester->getDisplay());
+        $this->assertSame([], $this->scopes, 'Nothing to list means nothing to read.');
     }
 
     public function testAnEventWithNoObserversIsStillShown(): void
@@ -144,7 +144,7 @@ final class ShowPoliciesCommandTest extends TestCase
 
         $tester = $this->runCommand(eventConfig: $eventConfig);
 
-        self::assertStringContainsString('0 observer(s)', $tester->getDisplay());
+        $this->assertStringContainsString('0 observer(s)', $tester->getDisplay());
     }
 
     /**

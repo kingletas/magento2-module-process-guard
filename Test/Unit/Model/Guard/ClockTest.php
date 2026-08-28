@@ -16,11 +16,11 @@ use PHPUnit\Framework\TestCase;
  * The real clock — the one place in this module that touches PHP's own timing
  * and memory functions.
  */
-final class ClockTest extends TestCase
+class ClockTest extends TestCase
 {
     public function testItIsTheInterfaceTheGuardDependsOn(): void
     {
-        self::assertInstanceOf(ClockInterface::class, new Clock());
+        $this->assertInstanceOf(ClockInterface::class, new Clock());
     }
 
     public function testTimeMovesForwardAndIsMeasuredInNanoseconds(): void
@@ -34,10 +34,10 @@ final class ClockTest extends TestCase
         }
         $after = $clock->nanoTime();
 
-        self::assertGreaterThan($before, $after);
+        $this->assertGreaterThan($before, $after);
         // A microsecond-resolution clock returning microseconds would put this
         // difference in the tens, not the tens of thousands.
-        self::assertGreaterThan(1_000, $after - $before);
+        $this->assertGreaterThan(1_000, $after - $before);
     }
 
     /**
@@ -46,7 +46,7 @@ final class ClockTest extends TestCase
      */
     public function testMemoryUsageReportsRealAllocation(): void
     {
-        self::assertSame(memory_get_usage(true), (new Clock())->memoryUsage());
+        $this->assertSame(memory_get_usage(true), (new Clock())->memoryUsage());
     }
 
     /**
@@ -55,7 +55,7 @@ final class ClockTest extends TestCase
     #[DataProvider('memoryLimits')]
     public function testEveryShorthandIsReadAsBytes(string|false $configured, ?int $expected): void
     {
-        self::assertSame($expected, $this->clockReading($configured)->memoryLimit());
+        $this->assertSame($expected, $this->clockReading($configured)->memoryLimit());
     }
 
     /**
@@ -83,8 +83,8 @@ final class ClockTest extends TestCase
      */
     public function testUnlimitedIsNullRatherThanNegativeOne(): void
     {
-        self::assertNull($this->clockReading('-1')->memoryLimit());
-        self::assertNotSame(-1, $this->clockReading('-1')->memoryLimit());
+        $this->assertNull($this->clockReading('-1')->memoryLimit());
+        $this->assertNotSame(-1, $this->clockReading('-1')->memoryLimit());
     }
 
     /**
@@ -98,7 +98,7 @@ final class ClockTest extends TestCase
             ? null
             : (new Clock())->memoryLimit();
 
-        self::assertSame($expected, (new Clock())->memoryLimit());
+        $this->assertSame($expected, (new Clock())->memoryLimit());
     }
 
     private function clockReading(string|false $configured): Clock

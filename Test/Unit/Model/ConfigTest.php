@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * The settings an operator reaches for mid-incident.
  */
-final class ConfigTest extends TestCase
+class ConfigTest extends TestCase
 {
     private const SECTION = 'commerce_processguard';
 
@@ -23,18 +23,18 @@ final class ConfigTest extends TestCase
     {
         $config = $this->config([]);
 
-        self::assertFalse($config->isEnabled());
-        self::assertFalse($config->isSheddingEnabled());
-        self::assertFalse($config->isSummaryReportingEnabled());
+        $this->assertFalse($config->isEnabled());
+        $this->assertFalse($config->isSheddingEnabled());
+        $this->assertFalse($config->isSummaryReportingEnabled());
     }
 
     public function testEveryObserverListIsEmptyWhenNothingIsConfigured(): void
     {
         $config = $this->config([]);
 
-        self::assertSame([], $config->getDisabledObservers());
-        self::assertSame([], $config->getAdvisoryObservers());
-        self::assertSame([], $config->getCriticalObservers());
+        $this->assertSame([], $config->getDisabledObservers());
+        $this->assertSame([], $config->getAdvisoryObservers());
+        $this->assertSame([], $config->getCriticalObservers());
     }
 
     /**
@@ -44,22 +44,22 @@ final class ConfigTest extends TestCase
     {
         $config = $this->config([self::SECTION . '/general/enabled' => '1']);
 
-        self::assertTrue($config->isEnabled());
-        self::assertFalse($config->isSheddingEnabled(), 'Enabling measurement must not enable shedding.');
+        $this->assertTrue($config->isEnabled());
+        $this->assertFalse($config->isSheddingEnabled(), 'Enabling measurement must not enable shedding.');
     }
 
     public function testSheddingReadsItsOwnFlag(): void
     {
         $config = $this->config([self::SECTION . '/enforcement/shedding_enabled' => '1']);
 
-        self::assertTrue($config->isSheddingEnabled());
+        $this->assertTrue($config->isSheddingEnabled());
     }
 
     public function testSummaryReportingReadsItsOwnFlag(): void
     {
         $config = $this->config([self::SECTION . '/reporting/summaries_enabled' => '1']);
 
-        self::assertTrue($config->isSummaryReportingEnabled());
+        $this->assertTrue($config->isSummaryReportingEnabled());
     }
 
     /**
@@ -76,12 +76,12 @@ final class ConfigTest extends TestCase
             self::SECTION . '/reporting/summaries_enabled' => '1',
         ]);
 
-        self::assertTrue($config->isEnabled());
-        self::assertTrue($config->isSheddingEnabled());
-        self::assertSame(['a'], $config->getDisabledObservers());
-        self::assertSame(['b'], $config->getAdvisoryObservers());
-        self::assertSame(['c'], $config->getCriticalObservers());
-        self::assertTrue($config->isSummaryReportingEnabled());
+        $this->assertTrue($config->isEnabled());
+        $this->assertTrue($config->isSheddingEnabled());
+        $this->assertSame(['a'], $config->getDisabledObservers());
+        $this->assertSame(['b'], $config->getAdvisoryObservers());
+        $this->assertSame(['c'], $config->getCriticalObservers());
+        $this->assertTrue($config->isSummaryReportingEnabled());
     }
 
     /**
@@ -94,7 +94,7 @@ final class ConfigTest extends TestCase
             self::SECTION . '/enforcement/disabled_observers' => 'slow_observer , another_one,  third ',
         ]);
 
-        self::assertSame(['slow_observer', 'another_one', 'third'], $config->getDisabledObservers());
+        $this->assertSame(['slow_observer', 'another_one', 'third'], $config->getDisabledObservers());
     }
 
     public function testEmptyEntriesInAnObserverListAreDropped(): void
@@ -103,7 +103,7 @@ final class ConfigTest extends TestCase
             self::SECTION . '/enforcement/disabled_observers' => 'one,,  ,two,',
         ]);
 
-        self::assertSame(['one', 'two'], $config->getDisabledObservers());
+        $this->assertSame(['one', 'two'], $config->getDisabledObservers());
     }
 
     /**
@@ -117,12 +117,12 @@ final class ConfigTest extends TestCase
 
         $config->isEnabled(7);
 
-        self::assertSame([ScopeInterface::SCOPE_STORE, 7], $scopes[0]);
+        $this->assertSame([ScopeInterface::SCOPE_STORE, 7], $scopes[0]);
     }
 
     public function testTheSectionIsAConstructorArgumentSoTheModuleCanBeRebranded(): void
     {
-        self::assertSame('acme_processguard', (new Config($this->scopeConfig([]), 'acme_processguard'))->getSection());
+        $this->assertSame('acme_processguard', (new Config($this->scopeConfig([]), 'acme_processguard'))->getSection());
     }
 
     /**

@@ -30,7 +30,7 @@ use RuntimeException;
 /**
  * An order being placed while one observer is misbehaving.
  */
-final class IncidentTest extends TestCase
+class IncidentTest extends TestCase
 {
     private const SECTION = 'commerce_processguard';
     private const EVENT = 'sales_model_service_quote_submit_before';
@@ -71,8 +71,8 @@ final class IncidentTest extends TestCase
 
         $this->placeOrder(['vendor_analytics_ping', 'payment_capture']);
 
-        self::assertSame(['vendor_analytics_ping', 'payment_capture'], $this->ran);
-        self::assertSame([], $this->journal->getObservations());
+        $this->assertSame(['vendor_analytics_ping', 'payment_capture'], $this->ran);
+        $this->assertSame([], $this->journal->getObservations());
     }
 
     /**
@@ -82,9 +82,9 @@ final class IncidentTest extends TestCase
     {
         $this->placeOrder(['vendor_analytics_ping', 'payment_capture']);
 
-        self::assertSame(['vendor_analytics_ping', 'payment_capture'], $this->ran);
-        self::assertCount(2, $this->journal->getObservations());
-        self::assertSame(2, $this->journal->getReport()->getCalls(self::PROCESS));
+        $this->assertSame(['vendor_analytics_ping', 'payment_capture'], $this->ran);
+        $this->assertCount(2, $this->journal->getObservations());
+        $this->assertSame(2, $this->journal->getReport()->getCalls(self::PROCESS));
     }
 
     /**
@@ -98,7 +98,7 @@ final class IncidentTest extends TestCase
 
         $overBudget = $this->observationsWith(ObservationOutcome::OverBudget);
 
-        self::assertSame(['vendor_analytics_ping'], $overBudget);
+        $this->assertSame(['vendor_analytics_ping'], $overBudget);
     }
 
     /**
@@ -110,8 +110,8 @@ final class IncidentTest extends TestCase
 
         $this->placeOrder(['vendor_broken_observer', 'payment_capture']);
 
-        self::assertSame(['payment_capture'], $this->ran);
-        self::assertSame(['vendor_broken_observer'], $this->observationsWith(ObservationOutcome::Disabled));
+        $this->assertSame(['payment_capture'], $this->ran);
+        $this->assertSame(['vendor_broken_observer'], $this->observationsWith(ObservationOutcome::Disabled));
     }
 
     /**
@@ -125,7 +125,7 @@ final class IncidentTest extends TestCase
 
         $this->placeOrder(['vendor_analytics_ping', 'payment_capture']);
 
-        self::assertSame(['payment_capture'], $this->ran);
+        $this->assertSame(['payment_capture'], $this->ran);
     }
 
     /**
@@ -141,9 +141,9 @@ final class IncidentTest extends TestCase
 
         // The observer ran and failed - containment is about what happens to
         // the failure, not about the observer being skipped.
-        self::assertSame(['vendor_analytics_ping', 'payment_capture'], $this->ran);
-        self::assertSame(['vendor_analytics_ping'], $this->observationsWith(ObservationOutcome::Contained));
-        self::assertSame(
+        $this->assertSame(['vendor_analytics_ping', 'payment_capture'], $this->ran);
+        $this->assertSame(['vendor_analytics_ping'], $this->observationsWith(ObservationOutcome::Contained));
+        $this->assertSame(
             'the analytics API is down',
             $this->journal->getObservations()[0]->getFailure(),
             'A contained failure is still a recorded failure - silence here would be worse than the crash.'
@@ -177,8 +177,8 @@ final class IncidentTest extends TestCase
 
         $this->placeOrder(['slow_first_observer', 'vendor_marketing_sync', 'payment_capture']);
 
-        self::assertSame(['slow_first_observer', 'payment_capture'], $this->ran);
-        self::assertSame(['vendor_marketing_sync'], $this->observationsWith(ObservationOutcome::Shed));
+        $this->assertSame(['slow_first_observer', 'payment_capture'], $this->ran);
+        $this->assertSame(['vendor_marketing_sync'], $this->observationsWith(ObservationOutcome::Shed));
     }
 
     /**
@@ -192,7 +192,7 @@ final class IncidentTest extends TestCase
 
         $this->placeOrder(['slow_first_observer', 'vendor_marketing_sync', 'payment_capture']);
 
-        self::assertSame(
+        $this->assertSame(
             ['slow_first_observer', 'vendor_marketing_sync', 'payment_capture'],
             $this->ran
         );
@@ -228,10 +228,10 @@ final class IncidentTest extends TestCase
 
         $report = $this->journal->getReport();
 
-        self::assertSame([self::PROCESS], $report->getProcesses());
-        self::assertSame(2, $report->getCalls(self::PROCESS));
-        self::assertSame(520.0, $report->getElapsedMilliseconds(self::PROCESS));
-        self::assertSame(1, $report->getOutcomeCount(self::PROCESS, ObservationOutcome::Contained));
+        $this->assertSame([self::PROCESS], $report->getProcesses());
+        $this->assertSame(2, $report->getCalls(self::PROCESS));
+        $this->assertSame(520.0, $report->getElapsedMilliseconds(self::PROCESS));
+        $this->assertSame(1, $report->getOutcomeCount(self::PROCESS, ObservationOutcome::Contained));
     }
 
     /**

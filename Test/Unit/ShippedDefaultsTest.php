@@ -13,21 +13,21 @@ use SimpleXMLElement;
 /**
  * What this module does to a store that installs it and changes nothing.
  */
-final class ShippedDefaultsTest extends TestCase
+class ShippedDefaultsTest extends TestCase
 {
     /**
      * The one that matters.
      */
     public function testSheddingIsOffOutOfTheBox(): void
     {
-        self::assertSame('0', $this->default('enforcement/shedding_enabled'));
+        $this->assertSame('0', $this->default('enforcement/shedding_enabled'));
     }
 
     public function testNoObserverIsClassifiedOutOfTheBox(): void
     {
-        self::assertSame('', $this->default('enforcement/disabled_observers'));
-        self::assertSame('', $this->default('enforcement/advisory_observers'));
-        self::assertSame('', $this->default('enforcement/critical_observers'));
+        $this->assertSame('', $this->default('enforcement/disabled_observers'));
+        $this->assertSame('', $this->default('enforcement/advisory_observers'));
+        $this->assertSame('', $this->default('enforcement/critical_observers'));
     }
 
     /**
@@ -36,7 +36,7 @@ final class ShippedDefaultsTest extends TestCase
      */
     public function testMeasurementIsOnOutOfTheBox(): void
     {
-        self::assertSame('1', $this->default('general/enabled'));
+        $this->assertSame('1', $this->default('general/enabled'));
     }
 
     /**
@@ -45,7 +45,7 @@ final class ShippedDefaultsTest extends TestCase
      */
     public function testSummaryReportingIsOffOutOfTheBox(): void
     {
-        self::assertSame('0', $this->default('reporting/summaries_enabled'));
+        $this->assertSame('0', $this->default('reporting/summaries_enabled'));
     }
 
     /**
@@ -57,7 +57,7 @@ final class ShippedDefaultsTest extends TestCase
         $section = $this->config()->default->children()[0]->getName();
 
         $di = simplexml_load_file(dirname(__DIR__, 2) . '/etc/di.xml');
-        self::assertInstanceOf(SimpleXMLElement::class, $di, 'etc/di.xml did not parse.');
+        $this->assertInstanceOf(SimpleXMLElement::class, $di, 'etc/di.xml did not parse.');
 
         $configured = null;
 
@@ -69,8 +69,8 @@ final class ShippedDefaultsTest extends TestCase
             }
         }
 
-        self::assertNotNull($configured, 'No <argument name="section"> found in etc/di.xml.');
-        self::assertSame($configured, $section);
+        $this->assertNotNull($configured, 'No <argument name="section"> found in etc/di.xml.');
+        $this->assertSame($configured, $section);
     }
 
     private function default(string $path): string
@@ -78,7 +78,7 @@ final class ShippedDefaultsTest extends TestCase
         [$group, $field] = explode('/', $path);
         $section = $this->config()->default->children()[0];
 
-        self::assertTrue(isset($section->{$group}->{$field}), sprintf('%s is not in etc/config.xml.', $path));
+        $this->assertTrue(isset($section->{$group}->{$field}), sprintf('%s is not in etc/config.xml.', $path));
 
         return trim((string) $section->{$group}->{$field});
     }
@@ -87,7 +87,7 @@ final class ShippedDefaultsTest extends TestCase
     {
         $config = simplexml_load_file(dirname(__DIR__, 2) . '/etc/config.xml');
 
-        self::assertInstanceOf(SimpleXMLElement::class, $config, 'etc/config.xml did not parse.');
+        $this->assertInstanceOf(SimpleXMLElement::class, $config, 'etc/config.xml did not parse.');
 
         return $config;
     }

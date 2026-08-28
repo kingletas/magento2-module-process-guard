@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * What this module costs the requests it does not act on.
  */
-final class DispatchCostTest extends TestCase
+class DispatchCostTest extends TestCase
 {
     use BudgetAssertions;
 
@@ -41,7 +41,7 @@ final class DispatchCostTest extends TestCase
      */
     public function testAnUnwatchedEventCostsTheSameWhateverTheObserverCount(): void
     {
-        self::assertConstantCost(
+        $this->assertConstantCost(
             'config reads while dispatching to observers of an unwatched event',
             fn (int $observers): int => $this->dispatch(self::UNWATCHED, $observers)->reads()
         );
@@ -52,7 +52,7 @@ final class DispatchCostTest extends TestCase
      */
     public function testWatchingAnEventCostsTheSameWhateverTheObserverCount(): void
     {
-        self::assertConstantCost(
+        $this->assertConstantCost(
             'config reads while dispatching to observers of a watched event',
             fn (int $observers): int => $this->dispatch(self::WATCHED, $observers)->reads()
         );
@@ -66,7 +66,7 @@ final class DispatchCostTest extends TestCase
     {
         $config = $this->dispatch(self::WATCHED, 56);
 
-        self::assertCostAtMost(
+        $this->assertCostAtMost(
             'settling policy for a fifty-six observer event',
             5,
             $config->reads(),
