@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Test\Unit\Stub;
+namespace Commerce\ProcessGuard\Test\Support;
 
 use Commerce\ProcessGuard\Api\ProcessGuardInterface;
 use Commerce\ProcessGuard\Model\Report\ProcessReport;

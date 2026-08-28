@@ -19,7 +19,7 @@ use Commerce\ProcessGuard\Model\Journal\ObservationOutcome;
 use Commerce\ProcessGuard\Model\Journal\ObservationRecorder;
 use Commerce\ProcessGuard\Model\Journal\RequestJournal;
 use Commerce\ProcessGuard\Model\Report\ProcessReport;
-use Commerce\ProcessGuard\Test\Unit\Stub\FakeClock;
+use Commerce\ProcessGuard\Test\Support\FakeClock;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;

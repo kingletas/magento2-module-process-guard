@@ -8,7 +8,7 @@
  */
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Test\Unit\Stub\FakeConsumer;
+namespace Commerce\ProcessGuard\Test\Support\FakeConsumer;
 
 use Magento\Framework\MessageQueue\ConsumerInterface;
 

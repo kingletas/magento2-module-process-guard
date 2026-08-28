@@ -12,7 +12,7 @@ namespace Commerce\ProcessGuard\Test\Unit\Plugin\MessageQueue;
 
 use Commerce\ProcessGuard\Api\ProcessGuardInterface;
 use Commerce\ProcessGuard\Plugin\MessageQueue\GuardedConsumer;
-use Commerce\ProcessGuard\Test\Unit\Stub\FakeConsumer\Interceptor;
+use Commerce\ProcessGuard\Test\Support\FakeConsumer\Interceptor;
 use Magento\Framework\MessageQueue\ConsumerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

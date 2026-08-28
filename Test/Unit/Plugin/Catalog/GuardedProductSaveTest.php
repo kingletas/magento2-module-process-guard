@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace Commerce\ProcessGuard\Test\Unit\Plugin\Catalog;
 
 use Commerce\ProcessGuard\Plugin\Catalog\GuardedProductSave;
-use Commerce\ProcessGuard\Test\Unit\Stub\RecordingGuard;
+use Commerce\ProcessGuard\Test\Support\RecordingGuard;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use PHPUnit\Framework\TestCase;

@@ -20,7 +20,7 @@ use Commerce\ProcessGuard\Model\Journal\ObservationRecorder;
 use Commerce\ProcessGuard\Model\Journal\RequestJournal;
 use Commerce\ProcessGuard\Model\Policy\ObserverPolicyResolver;
 use Commerce\ProcessGuard\Plugin\Event\GuardedInvoker;
-use Commerce\ProcessGuard\Test\Unit\Stub\FakeClock;
+use Commerce\ProcessGuard\Test\Support\FakeClock;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Invoker\InvokerDefault;
 use Magento\Framework\Event\Observer;
