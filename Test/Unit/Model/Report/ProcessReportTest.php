@@ -14,7 +14,7 @@ use Commerce\ProcessGuard\Model\Report\ProcessReport;
 use PHPUnit\Framework\TestCase;
 
 /**
- * What a report says, and — more importantly — what it refuses to leave out.
+ * The ordering, the units and the outcome counts a report carries.
  */
 class ProcessReportTest extends TestCase
 {
