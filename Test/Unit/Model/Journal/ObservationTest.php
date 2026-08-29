@@ -1,11 +1,10 @@
 <?php
 /**
- * ObservationTest.php
- *
- * @package     Commerce_ProcessGuard
- * @copyright   Copyright (c) the Commerce modules authors
- * @license     OSL-3.0 https://opensource.org/licenses/OSL-3.0
+ * @package   Commerce_ProcessGuard
+ * @copyright Copyright (c) the Commerce modules authors
+ * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
+
 declare(strict_types=1);
 
 namespace Commerce\ProcessGuard\Test\Unit\Model\Journal;
