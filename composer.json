@@ -3,6 +3,20 @@
     "description": "Budgets and kill switches for the hot paths: times every observer on a guarded event, contains the ones declared advisory, sheds them when a path blows its budget, and reports what it saw. Order placement, totals collection, catalogue saves and queue consumers.",
     "type": "magento2-module",
     "license": "OSL-3.0",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://repo.magento.com/"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/kingletas/magento2-module-foundation"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/kingletas/magento2-module-logger"
+        }
+    ],
     "require": {
         "php": ">=8.4",
         "commerce/module-foundation": "^1.0",
