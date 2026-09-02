@@ -4,6 +4,10 @@
 # allowed to pass vacuously.
 parameters:
     level: 6
+    # Registers the on-demand generator, so a Factory that only exists
+    # after `setup:di:compile` resolves here too.
+    bootstrapFiles:
+        - Test/generated-classes.php
     paths:
         - Api
         - Console
@@ -12,7 +16,3 @@ parameters:
     excludePaths:
         - Test/*
     treatPhpDocTypesAsCertain: false
-    ignoreErrors:
-        # Magento's models expose their columns through __call, so every
-        # getter on a core model is invisible to static analysis.
-        - '#Call to an undefined method Magento\\[A-Za-z\\]+::(get|set|has)[A-Za-z]+\(\)#'

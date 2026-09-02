@@ -165,10 +165,14 @@ $this->guard->run('erp.nightly_export', function (): void {
 
 ## Tests
 
-93 unit tests, no database and no real clock:
+```bash
+make check
+```
+
+The coding standard and all four suites — 203 tests, no database and no real clock. Narrow it to one suite with `SUITE`:
 
 ```bash
-M2_VENDOR=/path/to/magento/vendor php ../dev/run-tests.php -c ../dev/phpunit.xml
+make test SUITE=behaviour
 ```
 
 The precedence order, the containment rules, the three conditions for shedding, the cumulative budgets, the once-per-request reporting and the journal's bound are each asserted directly — those are the behaviours that decide whether an order is placed.
