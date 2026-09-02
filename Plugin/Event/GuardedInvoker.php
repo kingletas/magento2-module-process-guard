@@ -61,6 +61,8 @@ class GuardedInvoker
 
     /**
      * @param array<string, mixed> $configuration
+     *
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function aroundDispatch(
         InvokerDefault $subject,

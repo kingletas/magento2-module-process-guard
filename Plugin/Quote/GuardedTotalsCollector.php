@@ -26,6 +26,9 @@ class GuardedTotalsCollector
     ) {
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     public function aroundCollect(
         TotalsCollector $subject,
         callable $proceed,
@@ -38,6 +41,9 @@ class GuardedTotalsCollector
         );
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
     public function aroundCollectQuoteTotals(
         TotalsCollector $subject,
         callable $proceed,
