@@ -30,7 +30,7 @@ class GuardedProductSave
      *
      * phpcs:disable SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings("PHPMD.UnusedFormalParameter")
      */
     public function aroundSave(
         ProductRepositoryInterface $subject,

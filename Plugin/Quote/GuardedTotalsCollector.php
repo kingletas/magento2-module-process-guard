@@ -27,7 +27,7 @@ class GuardedTotalsCollector
     }
 
     /**
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings("PHPMD.UnusedFormalParameter")
      */
     public function aroundCollect(
         TotalsCollector $subject,
@@ -42,7 +42,7 @@ class GuardedTotalsCollector
     }
 
     /**
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @SuppressWarnings("PHPMD.UnusedFormalParameter")
      */
     public function aroundCollectQuoteTotals(
         TotalsCollector $subject,
