@@ -2,7 +2,7 @@
 
 Budgets, reporting and a kill switch for the paths that everything piles onto.
 
-Nobody sets out to put fifty-six observers on the order-placement path. It happens one integration at a time, each one reasonable, over years — and the result is a checkout where one vendor's slow HTTP call is everybody's slow checkout, one vendor's exception is a failed order, and there is no way to find out which vendor without a debugger on production.
+Nobody sets out to put fifty-six observers on the order-placement path. It happens one integration at a time, each one reasonable, over years — and the result is a checkout where one vendor's slow HTTP call is everybody's slow checkout, one vendor's exception is a failed order, and there's no way to find out which vendor without a debugger on production.
 
 One **Place Order** click on a mature installation can dispatch something like:
 
@@ -20,18 +20,18 @@ Spread across a dozen or more vendors. Magento reports none of it, and offers no
 ## What it does
 
 - **Times every observer on a guarded event**, and names the slow one in the log with its class and its milliseconds.
-- **Contains failures from observers you have declared advisory**, so a marketing ping that is down does not fail an order.
+- **Contains failures from observers you have declared advisory**, so a marketing ping that's down doesn't fail an order.
 - **Sheds advisory observers** once a path has blown its budget — if you have turned that on.
 - **Switches an observer off entirely** from configuration, without a patch and without a deploy.
-- **Counts repeats**, because the classic checkout defect is not a slow totals collector, it is the same collector running six times.
+- **Counts repeats**, because the classic checkout defect isn't a slow totals collector, it's the same collector running six times.
 - **Watches memory in long-running processes**, so a consumer climbing towards the limit says so before the kernel does.
 - **Lists what is actually on an event**, which nothing in Magento will tell you.
 
-## What it cannot do
+## What it can't do
 
-**It cannot stop work that has already started.** PHP has no preemption: once an observer is running, nothing short of the process exiting takes the CPU back from it. Budgets are enforced *between* units of work — the next advisory observer is skipped, never the current one. This module makes an overloaded path visible, keeps the non-essential parts of it from making things worse, and gives you a switch. It does not make a slow observer fast.
+**It can't stop work that has already started.** PHP has no preemption: once an observer is running, nothing short of the process exiting takes the CPU back from it. Budgets are enforced *between* units of work — the next advisory observer is skipped, never the current one. This module makes an overloaded path visible, keeps the non-essential parts of it from making things worse, and gives you a switch. It doesn't make a slow observer fast.
 
-That is on `ProcessGuardInterface` rather than in a footnote, because a guard that is believed to do more than it does is worse than no guard.
+That's on `ProcessGuardInterface` rather than in a footnote, because a guard that's believed to do more than it does is worse than no guard.
 
 ---
 
@@ -39,13 +39,13 @@ That is on `ProcessGuardInterface` rather than in a footnote, because a guard th
 
 Installing this changes nothing about what runs.
 
-With `enabled` on and nothing classified, **every observer still runs, still throws, and still aborts whatever it would have aborted**. All that starts is the reporting. Containment and shedding require a person to have named an observer — in `di.xml` where it is reviewed, or in configuration where it is deliberate.
+With `enabled` on and nothing classified, **every observer still runs, still throws, and still aborts whatever it would have aborted**. All that starts is the reporting. Containment and shedding require a person to have named an observer — in `di.xml` where it's reviewed, or in configuration where it's deliberate.
 
-The default is `Measured`, and that is a refusal to be clever. An observer on the order-placement path may be the fraud check, the inventory reservation or the payment capture. A heuristic that decided one of those looked unimportant, and swallowed its exception, would let a broken order through quietly — far worse than the slow checkout this module exists to fix.
+The default is `Measured`, and that's a refusal to be clever. An observer on the order-placement path may be the fraud check, the inventory reservation or the payment capture. A heuristic that decided one of those looked unimportant, and swallowed its exception, would let a broken order through quietly — far worse than the slow checkout this module exists to fix.
 
 | Policy | Failure | Over budget | Set by |
 | --- | --- | --- | --- |
-| `measured` *(default)* | propagates | still runs | nothing — it is the default |
+| `measured` *(default)* | propagates | still runs | nothing — it's the default |
 | `advisory` | logged, contained | skipped, if shedding is on | a human, by name |
 | `critical` | propagates | still runs | a human, by name |
 | `disabled` | never runs | never runs | a human, by name |
@@ -61,9 +61,9 @@ bin/magento commerce:process-guard:policies
 bin/magento commerce:process-guard:policies --area=frontend
 ```
 
-That prints every observer on every guarded event, its class, and what the guard would do to it. Read it before classifying anything.
+This prints every observer on every guarded event, its class, and what the guard would do to it. Read it before classifying anything.
 
-Then watch `var/log/commerce/process_guard.log` for a day. Breaches are logged; routine completions are not.
+Then watch `var/log/commerce/process_guard.log` for a day. Breaches are logged; routine completions aren't.
 
 ```
 event.sales_order_place_after: vendor_reviews_order_sync took 1840.22ms, over budget
@@ -86,9 +86,11 @@ bin/magento config:set commerce_processguard/enforcement/shedding_enabled 1
 bin/magento cache:clean config
 ```
 
-Observers can be named by their `events.xml` name **or** by their class: whoever is reading a stack trace has the class, whoever is reading configuration has the name, and requiring the right one of the two is a way to have the switch not work when it is needed.
+Observers can be named by their `events.xml` name **or** by their class: whoever is reading a stack trace has the class, whoever is reading configuration has the name, and requiring the right one of the two is a way to have the switch not work when it's needed.
 
-`cache:clean config` is not optional, and it is where the switch takes effect: every web request from that point reads the new lists. Each PHP process settles them once and then holds them — this method runs for every observer of every event, and consulting three config values per observer costs about a hundred and seventy reads to place one order. **A queue consumer already running is the exception**: it settled its lists when it started, so an observer disabled mid-incident stops running on the storefront immediately and keeps running in that consumer until it is restarted. `queue:consumers:start` again after the flip if the observer you are containing is one a consumer reaches.
+`cache:clean config` isn't optional, and it's where the switch takes effect: every web request from that point reads the new lists. Each PHP process settles them once and then holds them — this method runs for every observer of every event, and consulting three config values per observer costs about a hundred and seventy reads to place one order.
+
+**A queue consumer already running is the exception**: it settled its lists when it started, so an observer disabled mid-incident stops running on the storefront immediately and keeps running in that consumer until it's restarted. `queue:consumers:start` again after the flip if the observer you are containing is one a consumer reaches.
 
 Classifications that belong in the repository rather than in an incident go in `di.xml`:
 
@@ -103,7 +105,7 @@ Classifications that belong in the repository rather than in an incident go in `
 </type>
 ```
 
-A misspelled policy is ignored rather than guessed at — losing an order to a typo in an XML file is not a failure mode worth having.
+A misspelled policy is ignored rather than guessed at — losing an order to a typo in an XML file isn't a failure mode worth having.
 
 ---
 
@@ -116,11 +118,11 @@ Processes, out of the box:
 | Process | Budget | Why that shape |
 | --- | --- | --- |
 | `event.<name>` | 1000ms warn / 4000ms trip on the placement events | cumulative across all observers of that event |
-| `quote.collect_totals` | 1500ms warn, **max 4 calls** | no trip: totals cannot be skipped, the answer would be wrong prices |
+| `quote.collect_totals` | 1500ms warn, **max 4 calls** | no trip: totals can't be skipped, the answer would be wrong prices |
 | `catalog.product_save` | 2000ms warn | the path an import spends its life on |
 | `queue.consumer` | 120s warn, 768MB ceiling | consumers fail on memory, not on latency |
 
-**Every number there is a starting point, not a measurement.** Tune them from your own reports. A budget nobody has calibrated produces warnings people learn to ignore, which is worse than no budget at all. A process with no budget is unlimited, deliberately: inventing a threshold is how a monitoring tool becomes the incident.
+**Every number there's a starting point, not a measurement.** Tune them from your own reports. A budget nobody has calibrated produces warnings people learn to ignore, which is worse than no budget at all. A process with no budget is unlimited, deliberately: inventing a threshold is how a monitoring tool becomes the incident.
 
 ---
 
@@ -137,7 +139,7 @@ Processes, out of the box:
 
 ## Using the guard directly
 
-Anything worth naming can be wrapped, which is how cron jobs and exports get covered — there is no safe universal seam for those:
+Anything worth naming can be wrapped, which is how cron jobs and exports get covered — there's no safe universal seam for those:
 
 ```php
 $this->guard->run('erp.nightly_export', function (): void {
@@ -157,9 +159,9 @@ $this->guard->run('erp.nightly_export', function (): void {
 - **Turning on shedding is the only setting that changes what runs.** Everything else is measurement. Read a report first.
 - **Budgets are cumulative per request**, not per call. The failure that matters is a path costing four seconds, whether that was one observer or forty.
 - **Each breach is reported once per process per request.** A guard that logged every call after the first breach would turn one slow path into a hundred thousand log lines.
-- **The journal's bound applies to detail, not to counts.** Once it is full it keeps aggregating and stops keeping individual observations, and the report says so. A noteworthy observation displaces a routine one, so the one failure in ten thousand dispatches is not the entry that gets dropped.
+- **The journal's bound applies to detail, not to counts.** Once it's full it keeps aggregating and stops keeping individual observations, and the report says so. A noteworthy observation displaces a routine one, so the one failure in ten thousand dispatches isn't the entry that gets dropped.
 - **The policy listing is per area.** A CLI process is in `global`, so a storefront event's observers are simply absent from its configuration — pass `--area=frontend` to see them.
-- **The plugin declarations are not covered by the unit suite.** It proves the gate's logic exactly, and cannot prove that `di.xml` still binds to Magento's signatures after an upgrade. `bin/magento setup:di:compile` on a real installation is the check that catches that.
+- **The plugin declarations aren't covered by the unit suite.** It proves the gate's logic exactly, and can't prove that `di.xml` still binds to Magento's signatures after an upgrade. `bin/magento setup:di:compile` on a real installation is the check that catches that.
 
 ---
 
