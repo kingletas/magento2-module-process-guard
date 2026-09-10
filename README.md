@@ -168,6 +168,7 @@ $this->guard->run('erp.nightly_export', function (): void {
 ## Tests
 
 ```bash
+make install    # needs repo.magento.com credentials, for magento/framework
 make check
 ```
 
