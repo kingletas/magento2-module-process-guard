@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.0.0
+
 The vendor is now Kingletas: the package is `kingletas/module-process-guard`, the namespace
 `Kingletas\ProcessGuard` and the module `Kingletas_ProcessGuard`, and every config
 section, table, console command and queue name starts with `kingletas`
