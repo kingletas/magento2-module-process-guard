@@ -2,7 +2,7 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
-        <commerce_processguard>
+        <kingletas_processguard>
             <general>
                 <!--
                     Measurement is on, because with no observer classified
@@ -28,6 +28,6 @@
                 -->
                 <summaries_enabled>0</summaries_enabled>
             </reporting>
-        </commerce_processguard>
+        </kingletas_processguard>
     </default>
 </config>

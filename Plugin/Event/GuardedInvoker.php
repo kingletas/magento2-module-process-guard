@@ -1,22 +1,22 @@
 <?php
 /**
- * @package   Commerce_ProcessGuard
- * @copyright Copyright (c) the Commerce modules authors
+ * @package   Kingletas_ProcessGuard
+ * @copyright Copyright (c) the Kingletas modules authors
  * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
 
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Plugin\Event;
+namespace Kingletas\ProcessGuard\Plugin\Event;
 
-use Commerce\ProcessGuard\Api\ObserverPolicy;
-use Commerce\ProcessGuard\Api\ObserverPolicyResolverInterface;
-use Commerce\ProcessGuard\Api\ClockInterface;
-use Commerce\ProcessGuard\Api\ProcessGuardInterface;
-use Commerce\ProcessGuard\Model\Config;
-use Commerce\ProcessGuard\Model\Journal\Observation;
-use Commerce\ProcessGuard\Model\Journal\ObservationOutcome;
-use Commerce\ProcessGuard\Model\Journal\ObservationRecorder;
+use Kingletas\ProcessGuard\Api\ObserverPolicy;
+use Kingletas\ProcessGuard\Api\ObserverPolicyResolverInterface;
+use Kingletas\ProcessGuard\Api\ClockInterface;
+use Kingletas\ProcessGuard\Api\ProcessGuardInterface;
+use Kingletas\ProcessGuard\Model\Config;
+use Kingletas\ProcessGuard\Model\Journal\Observation;
+use Kingletas\ProcessGuard\Model\Journal\ObservationOutcome;
+use Kingletas\ProcessGuard\Model\Journal\ObservationRecorder;
 use Magento\Framework\Event\Invoker\InvokerDefault;
 use Magento\Framework\Event\Observer;
 use Throwable;

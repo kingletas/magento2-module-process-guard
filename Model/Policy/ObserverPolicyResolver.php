@@ -1,17 +1,17 @@
 <?php
 /**
- * @package   Commerce_ProcessGuard
- * @copyright Copyright (c) the Commerce modules authors
+ * @package   Kingletas_ProcessGuard
+ * @copyright Copyright (c) the Kingletas modules authors
  * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
 
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Model\Policy;
+namespace Kingletas\ProcessGuard\Model\Policy;
 
-use Commerce\ProcessGuard\Api\ObserverPolicy;
-use Commerce\ProcessGuard\Api\ObserverPolicyResolverInterface;
-use Commerce\ProcessGuard\Model\Config;
+use Kingletas\ProcessGuard\Api\ObserverPolicy;
+use Kingletas\ProcessGuard\Api\ObserverPolicyResolverInterface;
+use Kingletas\ProcessGuard\Model\Config;
 
 /**
  * Configuration first, declaration second, `Measured` for everything else.

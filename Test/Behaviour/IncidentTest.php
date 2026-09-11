@@ -1,25 +1,25 @@
 <?php
 /**
- * @package   Commerce_ProcessGuard
- * @copyright Copyright (c) the Commerce modules authors
+ * @package   Kingletas_ProcessGuard
+ * @copyright Copyright (c) the Kingletas modules authors
  * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
 
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Test\Behaviour;
+namespace Kingletas\ProcessGuard\Test\Behaviour;
 
-use Commerce\Foundation\Test\Support\CountingScopeConfig;
-use Commerce\ProcessGuard\Api\ProcessReporterInterface;
-use Commerce\ProcessGuard\Model\Config;
-use Commerce\ProcessGuard\Model\Guard\Budget;
-use Commerce\ProcessGuard\Model\Guard\ProcessGuard;
-use Commerce\ProcessGuard\Model\Journal\ObservationOutcome;
-use Commerce\ProcessGuard\Model\Journal\ObservationRecorder;
-use Commerce\ProcessGuard\Model\Journal\RequestJournal;
-use Commerce\ProcessGuard\Model\Policy\ObserverPolicyResolver;
-use Commerce\ProcessGuard\Plugin\Event\GuardedInvoker;
-use Commerce\ProcessGuard\Test\Support\FakeClock;
+use Kingletas\Foundation\Test\Support\CountingScopeConfig;
+use Kingletas\ProcessGuard\Api\ProcessReporterInterface;
+use Kingletas\ProcessGuard\Model\Config;
+use Kingletas\ProcessGuard\Model\Guard\Budget;
+use Kingletas\ProcessGuard\Model\Guard\ProcessGuard;
+use Kingletas\ProcessGuard\Model\Journal\ObservationOutcome;
+use Kingletas\ProcessGuard\Model\Journal\ObservationRecorder;
+use Kingletas\ProcessGuard\Model\Journal\RequestJournal;
+use Kingletas\ProcessGuard\Model\Policy\ObserverPolicyResolver;
+use Kingletas\ProcessGuard\Plugin\Event\GuardedInvoker;
+use Kingletas\ProcessGuard\Test\Support\FakeClock;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Invoker\InvokerDefault;
 use Magento\Framework\Event\Observer;
@@ -31,7 +31,7 @@ use RuntimeException;
  */
 class IncidentTest extends TestCase
 {
-    private const SECTION = 'commerce_processguard';
+    private const SECTION = 'kingletas_processguard';
     private const EVENT = 'sales_model_service_quote_submit_before';
     private const PROCESS = 'event.sales_model_service_quote_submit_before';
 

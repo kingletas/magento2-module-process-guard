@@ -1,15 +1,15 @@
 <?php
 /**
- * @package   Commerce_ProcessGuard
- * @copyright Copyright (c) the Commerce modules authors
+ * @package   Kingletas_ProcessGuard
+ * @copyright Copyright (c) the Kingletas modules authors
  * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
 
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Api;
+namespace Kingletas\ProcessGuard\Api;
 
-use Commerce\ProcessGuard\Model\Report\ProcessReport;
+use Kingletas\ProcessGuard\Model\Report\ProcessReport;
 
 /**
  * A named process, its budget, and what it actually cost.

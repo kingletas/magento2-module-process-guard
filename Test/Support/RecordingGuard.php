@@ -1,16 +1,16 @@
 <?php
 /**
- * @package   Commerce_ProcessGuard
- * @copyright Copyright (c) the Commerce modules authors
+ * @package   Kingletas_ProcessGuard
+ * @copyright Copyright (c) the Kingletas modules authors
  * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
 
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Test\Support;
+namespace Kingletas\ProcessGuard\Test\Support;
 
-use Commerce\ProcessGuard\Api\ProcessGuardInterface;
-use Commerce\ProcessGuard\Model\Report\ProcessReport;
+use Kingletas\ProcessGuard\Api\ProcessGuardInterface;
+use Kingletas\ProcessGuard\Model\Report\ProcessReport;
 
 /**
  * A guard that runs the work for real and remembers how it was called.

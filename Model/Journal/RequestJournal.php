@@ -1,16 +1,16 @@
 <?php
 /**
- * @package   Commerce_ProcessGuard
- * @copyright Copyright (c) the Commerce modules authors
+ * @package   Kingletas_ProcessGuard
+ * @copyright Copyright (c) the Kingletas modules authors
  * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
 
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Model\Journal;
+namespace Kingletas\ProcessGuard\Model\Journal;
 
-use Commerce\ProcessGuard\Api\ProcessJournalInterface;
-use Commerce\ProcessGuard\Model\Report\ProcessReport;
+use Kingletas\ProcessGuard\Api\ProcessJournalInterface;
+use Kingletas\ProcessGuard\Model\Report\ProcessReport;
 
 /**
  * Aggregates always, keeps detail up to a bound.

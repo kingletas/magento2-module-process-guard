@@ -1,17 +1,17 @@
 <?php
 /**
- * @package   Commerce_ProcessGuard
- * @copyright Copyright (c) the Commerce modules authors
+ * @package   Kingletas_ProcessGuard
+ * @copyright Copyright (c) the Kingletas modules authors
  * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
 
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Test\Unit\Plugin\MessageQueue;
+namespace Kingletas\ProcessGuard\Test\Unit\Plugin\MessageQueue;
 
-use Commerce\ProcessGuard\Api\ProcessGuardInterface;
-use Commerce\ProcessGuard\Plugin\MessageQueue\GuardedConsumer;
-use Commerce\ProcessGuard\Test\Support\FakeConsumer\Interceptor;
+use Kingletas\ProcessGuard\Api\ProcessGuardInterface;
+use Kingletas\ProcessGuard\Plugin\MessageQueue\GuardedConsumer;
+use Kingletas\ProcessGuard\Test\Support\FakeConsumer\Interceptor;
 use Magento\Framework\MessageQueue\ConsumerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

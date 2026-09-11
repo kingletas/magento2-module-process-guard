@@ -1,16 +1,16 @@
 <?php
 /**
- * @package   Commerce_ProcessGuard
- * @copyright Copyright (c) the Commerce modules authors
+ * @package   Kingletas_ProcessGuard
+ * @copyright Copyright (c) the Kingletas modules authors
  * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
 
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Test\Unit\Model\Journal;
+namespace Kingletas\ProcessGuard\Test\Unit\Model\Journal;
 
-use Commerce\ProcessGuard\Model\Journal\Observation;
-use Commerce\ProcessGuard\Model\Journal\ObservationOutcome;
+use Kingletas\ProcessGuard\Model\Journal\Observation;
+use Kingletas\ProcessGuard\Model\Journal\ObservationOutcome;
 use PHPUnit\Framework\TestCase;
 
 class ObservationTest extends TestCase

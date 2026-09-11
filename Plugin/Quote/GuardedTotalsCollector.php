@@ -1,15 +1,15 @@
 <?php
 /**
- * @package   Commerce_ProcessGuard
- * @copyright Copyright (c) the Commerce modules authors
+ * @package   Kingletas_ProcessGuard
+ * @copyright Copyright (c) the Kingletas modules authors
  * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
 
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Plugin\Quote;
+namespace Kingletas\ProcessGuard\Plugin\Quote;
 
-use Commerce\ProcessGuard\Api\ProcessGuardInterface;
+use Kingletas\ProcessGuard\Api\ProcessGuardInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address\Total;
 use Magento\Quote\Model\Quote\TotalsCollector;

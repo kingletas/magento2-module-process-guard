@@ -1,18 +1,18 @@
 <?php
 /**
- * @package   Commerce_ProcessGuard
- * @copyright Copyright (c) the Commerce modules authors
+ * @package   Kingletas_ProcessGuard
+ * @copyright Copyright (c) the Kingletas modules authors
  * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
 
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Test\Unit\Model\Report;
+namespace Kingletas\ProcessGuard\Test\Unit\Model\Report;
 
-use Commerce\ProcessGuard\Model\Journal\Observation;
-use Commerce\ProcessGuard\Model\Journal\ObservationOutcome;
-use Commerce\ProcessGuard\Model\Report\LogReporter;
-use Commerce\ProcessGuard\Model\Report\ProcessReport;
+use Kingletas\ProcessGuard\Model\Journal\Observation;
+use Kingletas\ProcessGuard\Model\Journal\ObservationOutcome;
+use Kingletas\ProcessGuard\Model\Report\LogReporter;
+use Kingletas\ProcessGuard\Model\Report\ProcessReport;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

@@ -1,15 +1,15 @@
 <?php
 /**
- * @package   Commerce_ProcessGuard
- * @copyright Copyright (c) the Commerce modules authors
+ * @package   Kingletas_ProcessGuard
+ * @copyright Copyright (c) the Kingletas modules authors
  * @license   OSL-3.0 https://opensource.org/licenses/OSL-3.0
  */
 
 declare(strict_types=1);
 
-namespace Commerce\ProcessGuard\Test\Unit\Model\Guard;
+namespace Kingletas\ProcessGuard\Test\Unit\Model\Guard;
 
-use Commerce\ProcessGuard\Model\Guard\Budget;
+use Kingletas\ProcessGuard\Model\Guard\Budget;
 use PHPUnit\Framework\TestCase;
 
 class BudgetTest extends TestCase

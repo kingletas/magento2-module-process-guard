@@ -1,4 +1,4 @@
-# Commerce_ProcessGuard
+# Kingletas_ProcessGuard
 
 Budgets, reporting and a kill switch for the paths that everything piles onto.
 
@@ -57,13 +57,13 @@ Precedence: the runtime kill list beats the runtime classifications, which beat 
 ## First run
 
 ```bash
-bin/magento commerce:process-guard:policies
-bin/magento commerce:process-guard:policies --area=frontend
+bin/magento kingletas:process-guard:policies
+bin/magento kingletas:process-guard:policies --area=frontend
 ```
 
 This prints every observer on every guarded event, its class, and what the guard would do to it. Read it before classifying anything.
 
-Then watch `var/log/commerce/process_guard.log` for a day. Breaches are logged; routine completions aren't.
+Then watch `var/log/kingletas/process_guard.log` for a day. Breaches are logged; routine completions aren't.
 
 ```
 event.sales_order_place_after: vendor_reviews_order_sync took 1840.22ms, over budget
@@ -80,9 +80,9 @@ Only then decide what is advisory.
 Stores → Configuration → Advanced → **Process Guard**, or:
 
 ```bash
-bin/magento config:set commerce_processguard/enforcement/disabled_observers vendor_broken_observer
-bin/magento config:set commerce_processguard/enforcement/advisory_observers vendor_analytics_ping,vendor_marketing_sync
-bin/magento config:set commerce_processguard/enforcement/shedding_enabled 1
+bin/magento config:set kingletas_processguard/enforcement/disabled_observers vendor_broken_observer
+bin/magento config:set kingletas_processguard/enforcement/advisory_observers vendor_analytics_ping,vendor_marketing_sync
+bin/magento config:set kingletas_processguard/enforcement/shedding_enabled 1
 bin/magento cache:clean config
 ```
 
@@ -95,7 +95,7 @@ Observers can be named by their `events.xml` name **or** by their class: whoever
 Classifications that belong in the repository rather than in an incident go in `di.xml`:
 
 ```xml
-<type name="Commerce\ProcessGuard\Model\Policy\ObserverPolicyResolver">
+<type name="Kingletas\ProcessGuard\Model\Policy\ObserverPolicyResolver">
     <arguments>
         <argument name="classifications" xsi:type="array">
             <item name="vendor_analytics_order_ping" xsi:type="string">advisory</item>
@@ -191,6 +191,6 @@ php ../bin/rebrand Acme
 Then move the configuration:
 
 ```sql
-UPDATE core_config_data SET path = REPLACE(path, 'commerce_processguard', 'acme_processguard')
- WHERE path LIKE 'commerce_processguard/%';
+UPDATE core_config_data SET path = REPLACE(path, 'kingletas_processguard', 'acme_processguard')
+ WHERE path LIKE 'kingletas_processguard/%';
 ```

@@ -1,5 +1,5 @@
 {
-    "name": "commerce/module-process-guard",
+    "name": "kingletas/module-process-guard",
     "description": "Budgets and kill switches for the hot paths: times every observer on a guarded event, contains the ones declared advisory, sheds them when a path blows its budget, and reports what it saw. Order placement, totals collection, catalogue saves and queue consumers.",
     "type": "magento2-module",
     "license": "OSL-3.0",
@@ -19,8 +19,8 @@
     ],
     "require": {
         "php": ">=8.4",
-        "commerce/module-foundation": "^1.0",
-        "commerce/module-logger": "^2.0",
+        "kingletas/module-foundation": "^1.0",
+        "kingletas/module-logger": "^2.0",
         "magento/framework": ">=103.0",
         "magento/module-catalog": ">=104.0",
         "magento/module-quote": ">=101.2",
@@ -39,7 +39,7 @@
             "registration.php"
         ],
         "psr-4": {
-            "Commerce\\ProcessGuard\\": ""
+            "Kingletas\\ProcessGuard\\": ""
         },
         "exclude-from-classmap": [
             "/Test/"

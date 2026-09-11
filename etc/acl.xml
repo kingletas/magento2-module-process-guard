@@ -7,7 +7,7 @@
                 <resource id="Magento_Backend::stores">
                     <resource id="Magento_Backend::stores_settings">
                         <resource id="Magento_Config::config">
-                            <resource id="Commerce_ProcessGuard::config"
+                            <resource id="Kingletas_ProcessGuard::config"
                                       title="Process Guard"
                                       sortOrder="900"/>
                         </resource>

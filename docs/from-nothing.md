@@ -27,7 +27,7 @@ Say what problem that solves, in the reader's own terms, before any mechanics.
 ## Step 1: install it
 
 ```bash
-composer require commerce/module-process-guard
+composer require kingletas/module-process-guard
 ```
 
 ## Step 2: point it at something
