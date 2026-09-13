@@ -27,6 +27,12 @@
                     bulk of the volume.
                 -->
                 <summaries_enabled>0</summaries_enabled>
+                <!--
+                    Off: one plugin call per collector per collection, plus a
+                    backtrace per collection. Switched on to answer which
+                    collector is slow, and switched off again after.
+                -->
+                <totals_detail_enabled>0</totals_detail_enabled>
             </reporting>
         </kingletas_processguard>
     </default>

@@ -296,6 +296,132 @@ class ProcessGuardTest extends TestCase
         $this->assertSame(40.0, $guard->getReport()->getElapsedMilliseconds(self::PROCESS));
     }
 
+    /**
+     * The defect this fixes: a PHP process that handles thousands of units of
+     * work measured all of them against one budget, crossed it early and never
+     * came back under it.
+     */
+    public function testTimeDoesNotCarryFromOneUnitOfWorkToTheNext(): void
+    {
+        $this->clock->willTake([400, 400]);
+        $guard = $this->guard(new Budget(warnMilliseconds: 300, tripMilliseconds: 300));
+
+        $guard->run(self::PROCESS, static fn (): bool => true);
+        $this->assertTrue($guard->isTripped(self::PROCESS), 'One long call should be over the warning.');
+
+        $guard->begin('queue.message');
+        $guard->run(self::PROCESS, static fn (): bool => true);
+
+        $this->assertSame(
+            400.0,
+            $guard->getReport()->getElapsedMilliseconds(self::PROCESS),
+            'The second unit of work is charged for itself and nothing else.'
+        );
+    }
+
+    public function testWithoutABoundaryTimeStillAccumulates(): void
+    {
+        $this->clock->willTake([400, 400]);
+        $guard = $this->guard();
+
+        $guard->run(self::PROCESS, static fn (): bool => true);
+        $guard->run(self::PROCESS, static fn (): bool => true);
+
+        $this->assertSame(
+            800.0,
+            $guard->getReport()->getElapsedMilliseconds(self::PROCESS),
+            'Two calls in one unit of work are two calls, which is the behaviour a request needs.'
+        );
+    }
+
+    public function testCallCountsDoNotCarryEither(): void
+    {
+        $this->clock->willTake([1, 1, 1, 1, 1, 1]);
+        $guard = $this->guard(new Budget(maxCalls: 2));
+
+        $guard->run(self::PROCESS, static fn (): bool => true);
+        $guard->run(self::PROCESS, static fn (): bool => true);
+        $guard->begin('queue.message');
+        $guard->run(self::PROCESS, static fn (): bool => true);
+
+        $this->assertSame(
+            0,
+            $this->countReported(ObservationOutcome::Repeated),
+            'Three calls across two units of work is not three calls in one.'
+        );
+    }
+
+    /**
+     * A consumer's own budget covers the consumer, not one message inside it.
+     */
+    public function testAProcessStillRunningSurvivesTheBoundary(): void
+    {
+        $this->clock->willTake([5, 5]);
+        $guard = $this->guard(new Budget(maxCalls: 1));
+
+        $guard->run(self::PROCESS, static function () use ($guard): bool {
+            $guard->begin('queue.message');
+
+            return true;
+        });
+        $guard->run(self::PROCESS, static fn (): bool => true);
+
+        $this->assertSame(
+            1,
+            $this->countReported(ObservationOutcome::Repeated),
+            'The call made before the boundary still counts, because the process was open across it.'
+        );
+    }
+
+    public function testAProcessThatHadFinishedDoesNotSurviveTheBoundary(): void
+    {
+        $this->clock->willTake([5, 5]);
+        $guard = $this->guard(new Budget(maxCalls: 1));
+
+        $guard->run(self::PROCESS, static fn (): bool => true);
+        $guard->begin('queue.message');
+        $guard->run(self::PROCESS, static fn (): bool => true);
+
+        $this->assertSame(
+            0,
+            $this->countReported(ObservationOutcome::Repeated),
+            'One call in each of two units of work is not two calls in one.'
+        );
+    }
+
+    public function testTheUnitIsNamedByWhoeverBeganIt(): void
+    {
+        $guard = $this->guard();
+        $guard->begin('cron.catalog_index_refresh');
+
+        $this->assertSame('cron.catalog_index_refresh', $guard->getUnit());
+    }
+
+    public function testABoundaryDoesNothingWhileTheGuardIsOff(): void
+    {
+        $config = $this->createMock(Config::class);
+        $config->method('isEnabled')->willReturn(false);
+
+        $guard = new ProcessGuard(
+            $this->clock,
+            new ObservationRecorder($this->journal, $this->reporter),
+            $config,
+            new BudgetDirectory([])
+        );
+
+        $guard->begin('queue.message');
+
+        $this->assertSame('', $guard->getUnit());
+    }
+
+    private function countReported(ObservationOutcome $outcome): int
+    {
+        return count(array_filter(
+            $this->reported,
+            static fn (Observation $observation): bool => $observation->getOutcome() === $outcome
+        ));
+    }
+
     private function guard(?Budget $budget = null): ProcessGuard
     {
         return new ProcessGuard(

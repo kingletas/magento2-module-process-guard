@@ -11,6 +11,7 @@ namespace Kingletas\ProcessGuard\Model\Guard;
 
 use Kingletas\ProcessGuard\Api\ClockInterface;
 use Kingletas\ProcessGuard\Api\ProcessGuardInterface;
+use Kingletas\ProcessGuard\Api\UnitOfWorkInterface;
 use Kingletas\ProcessGuard\Model\Config;
 use Kingletas\ProcessGuard\Model\Journal\Observation;
 use Kingletas\ProcessGuard\Model\Journal\ObservationOutcome;
@@ -24,7 +25,7 @@ use Throwable;
  * @see ProcessGuardInterface, and in particular what it says about not being
  *      able to interrupt work that has already started.
  */
-class ProcessGuard implements ProcessGuardInterface
+class ProcessGuard implements ProcessGuardInterface, UnitOfWorkInterface
 {
     /** @var array<string, int> Cumulative nanoseconds per process. */
     private array $elapsed = [];
@@ -37,6 +38,9 @@ class ProcessGuard implements ProcessGuardInterface
 
     /** @var array<string, bool> Breaches already reported. */
     private array $reported = [];
+
+    /** What is being accounted for right now, named by whoever began it. */
+    private string $unit = '';
 
     public function __construct(
         private readonly ClockInterface $clock,
@@ -141,6 +145,55 @@ class ProcessGuard implements ProcessGuardInterface
     public function getReport(): ProcessReport
     {
         return $this->recorder->getReport();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function begin(string $unit): void
+    {
+        if (!$this->config->isEnabled()) {
+            return;
+        }
+
+        // A process that is still running spans the boundary by definition: a
+        // consumer's own budget covers the consumer, not one message inside it.
+        $open = array_filter($this->depth, static fn (int $depth): bool => $depth > 0);
+
+        $this->elapsed = array_intersect_key($this->elapsed, $open);
+        $this->calls = array_intersect_key($this->calls, $open);
+        $this->reported = $this->reportedForOpen($open);
+        $this->depth = $open;
+        $this->unit = $unit;
+
+        $this->recorder->clear();
+    }
+
+    /**
+     * The unit being accounted for right now, for a report to name.
+     */
+    public function getUnit(): string
+    {
+        return $this->unit;
+    }
+
+    /**
+     * @param array<string, int>  $open
+     * @return array<string, bool>
+     */
+    private function reportedForOpen(array $open): array
+    {
+        $kept = [];
+
+        foreach ($this->reported as $key => $yes) {
+            $process = strstr($key, "\0", true);
+
+            if ($process !== false && isset($open[$process])) {
+                $kept[$key] = $yes;
+            }
+        }
+
+        return $kept;
     }
 
     /**

@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace Kingletas\ProcessGuard\Test\Unit\Plugin\Quote;
 
 use Kingletas\ProcessGuard\Api\ProcessGuardInterface;
+use Kingletas\ProcessGuard\Model\Config;
+use Kingletas\ProcessGuard\Model\Guard\CallerResolver;
 use Kingletas\ProcessGuard\Plugin\Quote\GuardedTotalsCollector;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address\Total;
@@ -22,6 +24,7 @@ class GuardedTotalsCollectorTest extends TestCase
 {
     private ProcessGuardInterface&MockObject $guard;
     private TotalsCollector&MockObject $subject;
+    private Config&MockObject $config;
 
     /** @var array<int, array{0: string, 1: array<string, mixed>}> */
     private array $runs = [];
@@ -30,6 +33,7 @@ class GuardedTotalsCollectorTest extends TestCase
     {
         $this->runs = [];
         $this->subject = $this->createMock(TotalsCollector::class);
+        $this->config = $this->createMock(Config::class);
 
         $this->guard = $this->createMock(ProcessGuardInterface::class);
         $this->guard->method('run')
@@ -43,7 +47,7 @@ class GuardedTotalsCollectorTest extends TestCase
     public function testTotalsAreStillCollected(): void
     {
         $total = $this->createMock(Total::class);
-        $plugin = new GuardedTotalsCollector($this->guard);
+        $plugin = $this->plugin();
 
         $result = $plugin->aroundCollect(
             $this->subject,
@@ -56,7 +60,7 @@ class GuardedTotalsCollectorTest extends TestCase
 
     public function testBothEntryPointsCountAsTheSameProcess(): void
     {
-        $plugin = new GuardedTotalsCollector($this->guard);
+        $plugin = $this->plugin();
         $quote = $this->quote(42, 3);
 
         $plugin->aroundCollect($this->subject, fn (): Total => $this->createMock(Total::class), $quote);
@@ -74,7 +78,7 @@ class GuardedTotalsCollectorTest extends TestCase
      */
     public function testTheReportCanNameTheCart(): void
     {
-        $plugin = new GuardedTotalsCollector($this->guard);
+        $plugin = $this->plugin();
 
         $plugin->aroundCollect($this->subject, fn (): Total => $this->createMock(Total::class), $this->quote(42, 14));
 
@@ -85,7 +89,7 @@ class GuardedTotalsCollectorTest extends TestCase
 
     public function testAFailureIsNotSwallowed(): void
     {
-        $plugin = new GuardedTotalsCollector($this->guard);
+        $plugin = $this->plugin();
 
         $this->expectException(RuntimeException::class);
 
@@ -95,6 +99,43 @@ class GuardedTotalsCollectorTest extends TestCase
                 throw new RuntimeException('a collector threw');
             },
             $this->quote(42, 1)
+        );
+    }
+
+    /**
+     * Who asked for a collection is the only thing that turns "collected five
+     * times, budget allows four" into somewhere to go and look.
+     */
+    public function testTheCallerIsRecordedOnlyWhenDetailIsOn(): void
+    {
+        $this->config->method('isTotalsDetailEnabled')->willReturn(true);
+
+        $this->plugin(new CallerResolver([], 3))
+            ->aroundCollect($this->subject, fn (): Total => $this->createMock(Total::class), $this->quote(7, 1));
+
+        $this->assertArrayHasKey('asked_by', $this->runs[0][1]);
+        $this->assertNotSame('', $this->runs[0][1]['asked_by']);
+    }
+
+    public function testTheCallerCostsNothingWhenDetailIsOff(): void
+    {
+        $this->config->method('isTotalsDetailEnabled')->willReturn(false);
+
+        $callers = $this->createMock(CallerResolver::class);
+        $callers->expects($this->never())->method('resolve');
+
+        $this->plugin($callers)
+            ->aroundCollect($this->subject, fn (): Total => $this->createMock(Total::class), $this->quote(7, 1));
+
+        $this->assertArrayNotHasKey('asked_by', $this->runs[0][1]);
+    }
+
+    private function plugin(?CallerResolver $callers = null): GuardedTotalsCollector
+    {
+        return new GuardedTotalsCollector(
+            $this->guard,
+            $this->config,
+            $callers ?? $this->createMock(CallerResolver::class)
         );
     }
 

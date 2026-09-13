@@ -69,4 +69,13 @@ class Config extends ModuleConfig
     {
         return $this->isSetFlag('reporting/summaries_enabled', $storeId);
     }
+
+    /**
+     * Whether totals collection is broken down into its individual collectors,
+     * and each collection records who asked for it.
+     */
+    public function isTotalsDetailEnabled(?int $storeId = null): bool
+    {
+        return $this->isSetFlag('reporting/totals_detail_enabled', $storeId);
+    }
 }

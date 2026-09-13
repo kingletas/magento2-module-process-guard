@@ -26,6 +26,9 @@ Spread across a dozen or more vendors. Magento reports none of it, and offers no
 - **Counts repeats**, because the classic checkout defect isn't a slow totals collector, it's the same collector running six times.
 - **Watches memory in long-running processes**, so a consumer climbing towards the limit says so before the kernel does.
 - **Lists what is actually on an event**, which nothing in Magento will tell you.
+- **Breaks a totals collection into its collectors**, so "collecting totals is slow" becomes "this one collector is 73% of it".
+- **Names the code that asked for a collection**, so a cart that collects totals more often than its budget allows says who asked for the extra one.
+- **Refuses a classification it cannot act on**, so an observer switched off in configuration is one the guard can actually reach.
 
 ## What it can't do
 
@@ -62,6 +65,14 @@ bin/magento kingletas:process-guard:policies --area=frontend
 ```
 
 This prints every observer on every guarded event, its class, and what the guard would do to it. Read it before classifying anything.
+
+Once you have classified something, check that the guard can actually reach it:
+
+```bash
+bin/magento kingletas:process-guard:check
+```
+
+It says nothing and exits 0 when every classified observer is on an event the guard watches. When one is not, it names the observer, names the setting it came from, lists the events that are watched, and exits 1. Put it in your deploy pipeline: a class pasted from a stack trace onto an event nobody watches is a setting that looks applied and does nothing.
 
 Then watch `var/log/kingletas/process_guard-<date>.log`, which rotates daily, for a day. Breaches are logged; routine completions aren't.
 
@@ -134,6 +145,9 @@ Processes, out of the box:
 | `Quote\TotalsCollector::collect` / `collectQuoteTotals` | both entry points, counted as one process, because collecting twice by two routes is still collecting twice |
 | `ProductRepositoryInterface::save` | the whole save, so its number and the observers' numbers together say which half is the problem |
 | `MessageQueue\ConsumerInterface::process` | declared on the interface, because there are several implementations and a monitor that covers some of them is a monitor whose silence means nothing |
+| `Total\CollectorInterface::collect` | one call per collector per collection, so a slow collection can name the collector rather than only its own total. Off unless the breakdown is switched on |
+| `MessageQueue\CallbackInvokerInterface::invoke` and `QueueInterface::subscribe` | where one message begins. A consumer given a message count takes the first, a daemon consumer takes the second, and the second is the one that runs for hours |
+| `Cron\Model\Schedule::tryLockJob` | where one cron job begins. Taking the lock is the last thing that happens before a job runs, and `_runJob` can only be reached under a plugin method name the coding standard refuses |
 
 ---
 

@@ -51,6 +51,15 @@ class ShippedDefaultsTest extends TestCase
     }
 
     /**
+     * Off, because it is one plugin call per collector per collection plus a
+     * backtrace, and it answers a question nobody has until something is slow.
+     */
+    public function testTheTotalsBreakdownIsOffOutOfTheBox(): void
+    {
+        $this->assertSame('0', $this->default('reporting/totals_detail_enabled'));
+    }
+
+    /**
      * The section id is what every config path hangs off, and `bin/rebrand`
      * rewrites it.
      */
