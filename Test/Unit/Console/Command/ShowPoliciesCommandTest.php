@@ -13,6 +13,8 @@ use Kingletas\ProcessGuard\Api\ObserverPolicy;
 use Kingletas\ProcessGuard\Api\ObserverPolicyResolverInterface;
 use Kingletas\ProcessGuard\Console\Command\ShowPoliciesCommand;
 use Kingletas\ProcessGuard\Model\Config;
+use Kingletas\ProcessGuard\Model\Guard\Budget;
+use Kingletas\ProcessGuard\Model\Guard\BudgetDirectory;
 use Magento\Framework\Config\ScopeInterface;
 use Magento\Framework\Event\Config\Data as EventConfigData;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -147,19 +149,66 @@ class ShowPoliciesCommandTest extends TestCase
     }
 
     /**
+     * The number a breach is judged against otherwise lives only in di.xml.
+     */
+    public function testItPrintsTheBudgetEveryGuardedProcessIsJudgedAgainst(): void
+    {
+        $budgets = new BudgetDirectory([
+            'quote.collect_totals' => new Budget(warnMilliseconds: 1500, maxCalls: 4),
+            'queue.consumer' => new Budget(warnMilliseconds: 120000, memoryBytes: 805306368),
+        ]);
+
+        $display = $this->runCommand([], null, null, null, $budgets)->getDisplay();
+
+        $this->assertStringContainsString('quote.collect_totals', $display);
+        $this->assertStringContainsString('1500ms', $display);
+        $this->assertStringContainsString('768MB', $display);
+    }
+
+    public function testItSaysSoWhenNoProcessHasABudget(): void
+    {
+        $this->assertStringContainsString(
+            'No process has a budget',
+            $this->runCommand()->getDisplay()
+        );
+    }
+
+    public function testAnAdvisoryObserverIsNotDescribedAsSkippedWhileSheddingIsOff(): void
+    {
+        $display = $this->runCommand()->getDisplay();
+
+        $this->assertStringContainsString('always run', $display);
+        $this->assertStringNotContainsString('skip when over budget', $display);
+    }
+
+    public function testAnAdvisoryObserverIsDescribedAsSkippedOnceSheddingIsOn(): void
+    {
+        $config = $this->createMock(Config::class);
+        $config->method('isEnabled')->willReturn(true);
+        $config->method('isSheddingEnabled')->willReturn(true);
+
+        $this->assertStringContainsString(
+            'skip when over budget',
+            $this->runCommand([], $config)->getDisplay()
+        );
+    }
+
+    /**
      * @param array<string, string> $input
      */
     private function runCommand(
         array $input = [],
         ?Config $config = null,
         ?ObserverPolicyResolverInterface $resolver = null,
-        ?EventConfigData $eventConfig = null
+        ?EventConfigData $eventConfig = null,
+        ?BudgetDirectory $budgets = null
     ): CommandTester {
         $command = new ShowPoliciesCommand(
             $resolver ?? $this->policyResolver,
             $eventConfig ?? $this->eventConfig,
             $this->configScope,
-            $config ?? $this->config
+            $config ?? $this->config,
+            $budgets
         );
 
         $tester = new CommandTester($command);

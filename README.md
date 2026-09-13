@@ -63,7 +63,7 @@ bin/magento kingletas:process-guard:policies --area=frontend
 
 This prints every observer on every guarded event, its class, and what the guard would do to it. Read it before classifying anything.
 
-Then watch `var/log/kingletas/process_guard.log` for a day. Breaches are logged; routine completions aren't.
+Then watch `var/log/kingletas/process_guard-<date>.log`, which rotates daily, for a day. Breaches are logged; routine completions aren't.
 
 ```
 event.sales_order_place_after: vendor_reviews_order_sync took 1840.22ms, over budget

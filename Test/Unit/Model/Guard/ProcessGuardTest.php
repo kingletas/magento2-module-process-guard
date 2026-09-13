@@ -12,6 +12,7 @@ namespace Kingletas\ProcessGuard\Test\Unit\Model\Guard;
 use Kingletas\ProcessGuard\Api\ProcessReporterInterface;
 use Kingletas\ProcessGuard\Model\Config;
 use Kingletas\ProcessGuard\Model\Guard\Budget;
+use Kingletas\ProcessGuard\Model\Guard\BudgetDirectory;
 use Kingletas\ProcessGuard\Model\Guard\ProcessGuard;
 use Kingletas\ProcessGuard\Model\Journal\Observation;
 use Kingletas\ProcessGuard\Model\Journal\ObservationOutcome;
@@ -79,7 +80,7 @@ class ProcessGuardTest extends TestCase
             $this->clock,
             new ObservationRecorder($this->journal, $this->reporter),
             $config,
-            [self::PROCESS => new Budget(warnMilliseconds: 1)]
+            new BudgetDirectory([self::PROCESS => new Budget(warnMilliseconds: 1)])
         );
 
         $this->assertSame('result', $guard->run(self::PROCESS, static fn (): string => 'result'));
@@ -265,7 +266,7 @@ class ProcessGuardTest extends TestCase
             $this->clock,
             new ObservationRecorder($this->journal, $this->reporter),
             $config,
-            []
+            new BudgetDirectory()
         );
 
         $guard->run(self::PROCESS, function () use ($guard): bool {
@@ -301,7 +302,7 @@ class ProcessGuardTest extends TestCase
             $this->clock,
             new ObservationRecorder($this->journal, $this->reporter),
             $this->config,
-            $budget === null ? [] : [self::PROCESS => $budget]
+            new BudgetDirectory($budget === null ? [] : [self::PROCESS => $budget])
         );
     }
 }

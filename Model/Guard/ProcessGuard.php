@@ -38,16 +38,11 @@ class ProcessGuard implements ProcessGuardInterface
     /** @var array<string, bool> Breaches already reported. */
     private array $reported = [];
 
-    /**
-     * @param array<string, Budget> $budgets Process name => budget. A process
-     *                                       that is not in here has no limits,
-     *                                       which is deliberate: see Budget.
-     */
     public function __construct(
         private readonly ClockInterface $clock,
         private readonly ObservationRecorder $recorder,
         private readonly Config $config,
-        private readonly array $budgets = []
+        private readonly ?BudgetDirectory $budgets = null
     ) {
     }
 
@@ -258,8 +253,6 @@ class ProcessGuard implements ProcessGuardInterface
 
     private function budgetFor(string $process): ?Budget
     {
-        $budget = $this->budgets[$process] ?? null;
-
-        return $budget instanceof Budget ? $budget : null;
+        return $this->budgets?->get($process);
     }
 }

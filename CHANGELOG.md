@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+`bin/magento kingletas:process-guard:policies` now prints the budget every guarded process is judged against: its warn and trip times, its call ceiling and its memory ceiling. Those numbers only existed in `di.xml`, so an operator who read `over budget` in the log had to open a file under `vendor/` to find out what the budget was, while the screen that tells them to run that command promised a decision taken against evidence.
+
+An advisory observer is no longer described as skipped while shedding is off. The row said `contain failures, skip when over budget` whatever the setting, and with shedding off an advisory observer always runs. It now says which of the two is true.
+
+The Measurement screen and the README named the report as `var/log/kingletas/process_guard.log`. The handler rotates daily, so that file never exists; both now name `process_guard-<date>.log`.
+
 Tooling only. Release notes join each changelog paragraph onto one line,
 because a release page turns every newline into a line break. Nothing about
 how the module behaves changed.

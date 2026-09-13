@@ -85,7 +85,9 @@
         </arguments>
     </virtualType>
 
-    <type name="Kingletas\ProcessGuard\Model\Guard\ProcessGuard">
+    <!-- One directory of budgets, so the guard and the report can never disagree. -->
+    <virtualType name="Kingletas\ProcessGuard\Model\Guard\Budgets"
+                 type="Kingletas\ProcessGuard\Model\Guard\BudgetDirectory">
         <arguments>
             <argument name="budgets" xsi:type="array">
                 <item name="event.sales_model_service_quote_submit_before" xsi:type="object">Kingletas\ProcessGuard\Model\Guard\OrderPlacementBudget</item>
@@ -98,6 +100,18 @@
                 <item name="catalog.product_save" xsi:type="object">Kingletas\ProcessGuard\Model\Guard\ProductSaveBudget</item>
                 <item name="queue.consumer" xsi:type="object">Kingletas\ProcessGuard\Model\Guard\ConsumerBudget</item>
             </argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Kingletas\ProcessGuard\Model\Guard\ProcessGuard">
+        <arguments>
+            <argument name="budgets" xsi:type="object">Kingletas\ProcessGuard\Model\Guard\Budgets</argument>
+        </arguments>
+    </type>
+
+    <type name="Kingletas\ProcessGuard\Console\Command\ShowPoliciesCommand">
+        <arguments>
+            <argument name="budgets" xsi:type="object">Kingletas\ProcessGuard\Model\Guard\Budgets</argument>
         </arguments>
     </type>
 
