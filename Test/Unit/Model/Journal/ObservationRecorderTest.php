@@ -14,6 +14,7 @@ use Kingletas\ProcessGuard\Api\ProcessReporterInterface;
 use Kingletas\ProcessGuard\Model\Journal\Observation;
 use Kingletas\ProcessGuard\Model\Journal\ObservationOutcome;
 use Kingletas\ProcessGuard\Model\Journal\ObservationRecorder;
+use Kingletas\ProcessGuard\Model\Journal\RequestJournal;
 use Kingletas\ProcessGuard\Model\Report\ProcessReport;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -194,5 +195,16 @@ class ObservationRecorderTest extends TestCase
                 $this->processes[] = ['report' => $report, 'process' => $process];
             }
         };
+    }
+
+    public function testClearingForgetsWhatWasWrittenDown(): void
+    {
+        $journal = new RequestJournal();
+        $recorder = new ObservationRecorder($journal, $this->createMock(ProcessReporterInterface::class));
+
+        $recorder->record(new Observation(ObservationOutcome::Completed, 'a.process', 'label', 1000));
+        $recorder->clear();
+
+        $this->assertTrue($recorder->getReport()->isEmpty());
     }
 }

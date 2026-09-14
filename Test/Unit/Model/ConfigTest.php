@@ -28,6 +28,7 @@ class ConfigTest extends TestCase
         $this->assertFalse($config->isEnabled());
         $this->assertFalse($config->isSheddingEnabled());
         $this->assertFalse($config->isSummaryReportingEnabled());
+        $this->assertFalse($config->isTotalsDetailEnabled());
     }
 
     public function testEveryObserverListIsEmptyWhenNothingIsConfigured(): void
@@ -62,6 +63,14 @@ class ConfigTest extends TestCase
         $config = $this->config([self::SECTION . '/reporting/summaries_enabled' => '1']);
 
         $this->assertTrue($config->isSummaryReportingEnabled());
+    }
+
+    public function testTheTotalsBreakdownReadsItsOwnFlag(): void
+    {
+        $config = $this->config([self::SECTION . '/reporting/totals_detail_enabled' => '1']);
+
+        $this->assertTrue($config->isTotalsDetailEnabled());
+        $this->assertFalse($config->isSummaryReportingEnabled());
     }
 
     /**

@@ -43,4 +43,12 @@ class ObservationRecorder
     {
         return $this->journal->getReport();
     }
+
+    /**
+     * Forget what has been written down, so the next unit of work starts clean.
+     */
+    public function clear(): void
+    {
+        $this->journal->clear();
+    }
 }

@@ -13,6 +13,7 @@ use Kingletas\Foundation\Test\Support\CountingScopeConfig;
 use Kingletas\ProcessGuard\Api\ProcessReporterInterface;
 use Kingletas\ProcessGuard\Model\Config;
 use Kingletas\ProcessGuard\Model\Guard\Budget;
+use Kingletas\ProcessGuard\Model\Guard\BudgetDirectory;
 use Kingletas\ProcessGuard\Model\Guard\ProcessGuard;
 use Kingletas\ProcessGuard\Model\Journal\ObservationOutcome;
 use Kingletas\ProcessGuard\Model\Journal\ObservationRecorder;
@@ -249,7 +250,7 @@ class IncidentTest extends TestCase
             $clock,
             $recorder,
             $config,
-            [self::PROCESS => new Budget(warnMilliseconds: 1000, tripMilliseconds: 4000)]
+            new BudgetDirectory([self::PROCESS => new Budget(warnMilliseconds: 1000, tripMilliseconds: 4000)])
         );
 
         $invoker = new GuardedInvoker(

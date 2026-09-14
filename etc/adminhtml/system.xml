@@ -14,7 +14,7 @@
                 <comment><![CDATA[Times the observers on the guarded events, plus totals collection,
                     product saves and queue consumers. Measurement on its own changes nothing about what
                     runs — see <strong>Enforcement</strong> for that. Reports go to
-                    <code>var/log/kingletas/process_guard.log</code>.]]></comment>
+                    <code>var/log/kingletas/process_guard-&lt;date&gt;.log</code>, which rotates daily.]]></comment>
                 <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" canRestore="1">
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
@@ -68,6 +68,16 @@
                     <comment><![CDATA[Off by default. Breaches are always logged; summaries are every
                         process every time, which is most of the volume. Useful while you are calibrating
                         budgets on staging, noisy in production.]]></comment>
+                </field>
+                <field id="totals_detail_enabled" translate="label comment" type="select" sortOrder="20"
+                       showInDefault="1" canRestore="1">
+                    <label>Break Down Totals Collection</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Off by default. Times each totals collector separately, so a slow
+                        collection names the collector responsible instead of only its own total, and
+                        records which code asked for each collection so a cart that collects totals more
+                        often than its budget allows can say who asked for the extra one. Both cost real
+                        time: switch it on to answer a question, and off again once you have.]]></comment>
                 </field>
             </group>
         </section>

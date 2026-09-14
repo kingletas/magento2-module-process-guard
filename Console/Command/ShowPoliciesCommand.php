@@ -12,6 +12,7 @@ namespace Kingletas\ProcessGuard\Console\Command;
 use Kingletas\ProcessGuard\Api\ObserverPolicy;
 use Kingletas\ProcessGuard\Api\ObserverPolicyResolverInterface;
 use Kingletas\ProcessGuard\Model\Config;
+use Kingletas\ProcessGuard\Model\Guard\BudgetDirectory;
 use Magento\Framework\App\Area;
 use Magento\Framework\Config\ScopeInterface;
 use Magento\Framework\Event\Config\Data as EventConfigData;
@@ -44,6 +45,7 @@ class ShowPoliciesCommand extends Command
         private readonly EventConfigData $eventConfig,
         private readonly ScopeInterface $configScope,
         private readonly Config $config,
+        private readonly ?BudgetDirectory $budgets = null,
         ?string $name = null
     ) {
         parent::__construct($name);
@@ -83,6 +85,7 @@ class ShowPoliciesCommand extends Command
         }
 
         $this->printState($output, $area);
+        $this->printBudgets($output);
 
         // Observer configuration is read through the current config scope, so
         // listing another area enters it.
@@ -146,13 +149,63 @@ class ShowPoliciesCommand extends Command
         }
     }
 
+    /**
+     * An advisory observer is only skipped while shedding is on, so the row says which.
+     */
     private function describe(ObserverPolicy $policy): string
     {
+        $advisory = $this->config->isSheddingEnabled()
+            ? 'contain failures, skip when over budget'
+            : 'contain failures, always run';
+
         return match ($policy) {
             ObserverPolicy::Measured => 'time it, report if slow',
-            ObserverPolicy::Advisory => '<comment>contain failures, skip when over budget</comment>',
+            ObserverPolicy::Advisory => sprintf('<comment>%s</comment>', $advisory),
             ObserverPolicy::Critical => 'time it, never skip or contain',
             ObserverPolicy::Disabled => '<error>never run it</error>',
         };
+    }
+
+    /**
+     * The numbers a breach is judged against, which otherwise live only in di.xml.
+     */
+    private function printBudgets(OutputInterface $output): void
+    {
+        $budgets = $this->budgets?->all() ?? [];
+
+        $output->writeln('');
+
+        if ($budgets === []) {
+            $output->writeln('<comment>No process has a budget. See the budgets argument in di.xml.</comment>');
+
+            return;
+        }
+
+        ksort($budgets);
+        $table = new Table($output);
+        $table->setHeaders(['Process', 'Warn', 'Trip', 'Max calls', 'Memory']);
+
+        foreach ($budgets as $process => $budget) {
+            $limits = $budget->toArray();
+            $table->addRow([
+                $process,
+                $this->milliseconds($limits['warn_ms']),
+                $this->milliseconds($limits['trip_ms']),
+                $limits['max_calls'] === null ? 'none' : (string) $limits['max_calls'],
+                $this->megabytes($limits['memory_bytes']),
+            ]);
+        }
+
+        $table->render();
+    }
+
+    private function milliseconds(?int $value): string
+    {
+        return $value === null ? 'none' : sprintf('%dms', $value);
+    }
+
+    private function megabytes(?int $value): string
+    {
+        return $value === null ? 'none' : sprintf('%dMB', (int) round($value / 1024 / 1024));
     }
 }

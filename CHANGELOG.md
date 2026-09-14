@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+Totals collection can now be broken down into the collectors it is made of. `Break Down Totals Collection` in the Reporting section times each collector separately, so a report that said `quote.collect_totals: 1672ms` now says which of the eighteen collectors spent it. On the store this was measured against, one tax collector was 91% of the collection and nothing in Magento could say so.
+
+The same setting records the code that asked for each collection. The guard already reported `5 calls, budget allows 4`; it can now name the plugin that asked for the fifth, which is the difference between knowing there is a redundant collection and being able to go and remove it. Both cost real time and both are off by default.
+
+`bin/magento kingletas:process-guard:check` is a new command, and it is silent when there is nothing wrong. An observer classified as disabled, advisory or critical that is on none of the guarded events was accepted by the configuration field, saved, listed in the policy report and had no effect whatsoever. The command names any such entry, names the setting it came from, lists the events that are watched and exits non-zero, so a deploy can refuse a setting that does nothing.
+
+Accounting now resets at the boundary of a unit of work rather than running for the life of the PHP process. A consumer that handles thousands of messages measured all of them against one budget, crossed it in the first minutes and could never come back under it, so the `queue.consumer` warning fired for the rest of the run and stopped carrying information. One message is now one unit of work, and so is one cron job. A process that is still running spans the boundary, because a consumer's own budget covers the consumer rather than one message inside it.
+
+`bin/magento kingletas:process-guard:policies` now prints the budget every guarded process is judged against: its warn and trip times, its call ceiling and its memory ceiling. Those numbers only existed in `di.xml`, so an operator who read `over budget` in the log had to open a file under `vendor/` to find out what the budget was, while the screen that tells them to run that command promised a decision taken against evidence.
+
+An advisory observer is no longer described as skipped while shedding is off. The row said `contain failures, skip when over budget` whatever the setting, and with shedding off an advisory observer always runs. It now says which of the two is true.
+
+The Measurement screen and the README named the report as `var/log/kingletas/process_guard.log`. The handler rotates daily, so that file never exists; both now name `process_guard-<date>.log`.
+
 Tooling only. The wiring suite fails when an encrypted admin field has no
 sensitive declaration, so the next credential cannot ship undeclared. Nothing
 about how the module behaves changed.
