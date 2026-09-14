@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+Documentation only. `docs/recommended-settings.md` says what to set on a
+production store and why, and the README links to it. Nothing about how the
+module behaves changed.
+
 Tooling only. Release notes join each changelog paragraph onto one line,
 because a release page turns every newline into a line break. Nothing about
 how the module behaves changed.
