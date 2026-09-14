@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+Requires `kingletas/module-foundation` 2.1 or later, whose wiring assertions the
+test suite now uses. Nothing about how the module behaves changed.
+
 Documentation only. `docs/recommended-settings.md` covers the totals breakdown
 setting and the new check command, and says which of the two console commands
 can gate a deploy. Nothing about how the module behaves changed.
