@@ -12,7 +12,7 @@ What to set on a production store, and why. Six settings, and the recommendation
 - [Budgets](#budgets)
 - [Making a change take effect](#making-a-change-take-effect)
 - [Where the settings can be set](#where-the-settings-can-be-set)
-- [Why this one cannot be a deploy gate](#why-this-one-cannot-be-a-deploy-gate)
+- [Wiring it into a deploy](#wiring-it-into-a-deploy)
 
 ## The short version
 
@@ -20,6 +20,7 @@ What to set on a production store, and why. Six settings, and the recommendation
 |---|---|---|
 | `general/enabled` | `1` | Measurement only. An unguarded event costs one `mb_strtolower` and one `isset` |
 | `reporting/summaries_enabled` | `0` | Breaches are always logged. Summaries are every process every time, which is most of the volume |
+| `reporting/totals_detail_enabled` | `0`, until a totals collection is the problem | Times each collector separately and records what asked for each collection. Both cost real time |
 | `enforcement/disabled_observers` | empty | This is the incident switch. Useful at two in the morning, wrong as a standing setting |
 | `enforcement/shedding_enabled` | `0` | The only setting that changes what runs. It needs budgets calibrated against your traffic |
 | `enforcement/critical_observers` | the ones that decide stock and money | Adding a name here can only make the guard do less |
@@ -142,11 +143,19 @@ Each PHP process settles the lists once and then holds them, which is what keeps
 
 **Every setting is global.** All six fields are editable at default scope only, so you cannot classify an observer for one website and not another.
 
-## Why this one cannot be a deploy gate
+## Wiring it into a deploy
 
-`kingletas:process-guard:policies` is a listing. It exits `0` in every case except an unknown `--area`, so there is nothing for a deploy check to assert on.
+```bash
+bin/magento kingletas:process-guard:check
+```
 
-**That is worth saying out loud rather than leaving for somebody to discover.** The way you find out this module has stopped measuring is that its log went quiet, and nothing is watching for that. If you want a check, assert that the log file exists and has been written to inside the retention window.
+**It is silent when every classified observer is one the guard actually watches, and exits non-zero when one is not.**
+
+That is a real failure and an easy one to have. An observer name in `disabled_observers`, `advisory_observers` or `critical_observers` that is on none of the guarded events was accepted by the field, saved, listed in the policy report, and had no effect whatsoever. The command names the entry, names the setting it came from, and lists the events that are watched.
+
+**So a deploy can refuse a setting that does nothing**, which is the difference between a typo you find now and one you find during an incident when the switch you reach for turns out to be inert.
+
+`kingletas:process-guard:policies` is still a listing rather than a gate: it exits `0` in every case except an unknown `--area`. Use it to read, and `check` to assert.
 
 ## Where to go next
 
