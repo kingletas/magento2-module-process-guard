@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+Tooling only. The wiring suite fails when an encrypted admin field has no
+sensitive declaration, so the next credential cannot ship undeclared. Nothing
+about how the module behaves changed.
+
 Documentation only. `docs/recommended-settings.md` says what to set on a
 production store and why, and the README links to it. Nothing about how the
 module behaves changed.
