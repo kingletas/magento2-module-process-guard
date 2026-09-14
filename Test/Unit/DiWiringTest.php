@@ -36,6 +36,11 @@ class DiWiringTest extends TestCase
         $this->assertNoVirtualTypeIsReferencedThroughAGeneratedProxy($this->moduleDir());
     }
 
+    public function testEveryEncryptedFieldIsDeclaredSensitive(): void
+    {
+        $this->assertEveryEncryptedFieldIsDeclaredSensitive($this->moduleDir());
+    }
+
     private function moduleDir(): string
     {
         return dirname(__DIR__, 2);
