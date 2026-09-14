@@ -77,6 +77,8 @@ Only then decide what is advisory.
 
 ## Configuring it
 
+**[Recommended settings](docs/recommended-settings.md)** says what to set on a production store and why.
+
 Stores → Configuration → Advanced → **Process Guard**, or:
 
 ```bash
