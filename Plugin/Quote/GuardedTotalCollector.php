@@ -84,9 +84,9 @@ class GuardedTotalCollector
     private function realClass(CollectorInterface $subject): string
     {
         $class = get_class($subject);
-        $at = strpos($class, '\\Interceptor');
+        $marker = strpos($class, '\\Interceptor');
 
-        return $at === false ? $class : substr($class, 0, $at);
+        return $marker === false ? $class : substr($class, 0, $marker);
     }
 
     /**

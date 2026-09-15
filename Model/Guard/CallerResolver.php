@@ -52,7 +52,7 @@ class CallerResolver
                 continue;
             }
 
-            $function = (string) ($frame['function'] ?? '');
+            $function = $frame['function'];
 
             if ($this->machinery($function)) {
                 continue;
@@ -101,8 +101,8 @@ class CallerResolver
      */
     private function strip(string $class): string
     {
-        $at = strpos($class, '\\Interceptor');
+        $marker = strpos($class, '\\Interceptor');
 
-        return $at === false ? $class : substr($class, 0, $at);
+        return $marker === false ? $class : substr($class, 0, $marker);
     }
 }

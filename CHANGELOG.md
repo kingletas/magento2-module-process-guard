@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+Tooling only. PHPStan and PHPMD pass. The caller resolver reads a backtrace
+frame's function name directly, since PHP always sets it, and two offsets are
+named `$marker` rather than `$at`. Nothing about how the module behaves changed.
+
 Requires `kingletas/module-foundation` 2.1 or later, whose wiring assertions the
 test suite now uses. Nothing about how the module behaves changed.
 
