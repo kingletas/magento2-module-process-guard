@@ -26,7 +26,7 @@ Spread across a dozen or more vendors. Magento reports none of it, and offers no
 - **Counts repeats**, because the classic checkout defect isn't a slow totals collector, it's the same collector running six times.
 - **Watches memory in long-running processes**, so a consumer climbing towards the limit says so before the kernel does.
 - **Lists what is actually on an event**, which nothing in Magento will tell you.
-- **Breaks a totals collection into its collectors**, so "collecting totals is slow" becomes "this one collector is 73% of it".
+- **Breaks a totals collection into its collectors**, so "collecting totals is slow" becomes "this one collector took most of it", in the collection summary.
 - **Names the code that asked for a collection**, so a cart that collects totals more often than its budget allows says who asked for the extra one.
 - **Refuses a classification it cannot act on**, so an observer switched off in configuration is one the guard can actually reach.
 
