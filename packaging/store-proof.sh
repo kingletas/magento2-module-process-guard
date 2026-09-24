@@ -33,6 +33,12 @@
 # Settings are written at default scope, which is where the README's config:set
 # writes and the only scope these admin fields show in. They are read back as
 # the effective value on the default store view, which inherits them.
+#
+# THE STORE'S OWN MODULE. Budgets reach the guard as an array wherever a store
+# tuned one in its own di.xml, and wherever a store upgrading from 2.0.0 still
+# has 2.0.0's wiring cached. The proof builds that shape on every store with a
+# module of the store's own under app/code, and takes it out again: its files,
+# the module list as it was, and any row setup:upgrade gave it.
 
 set -euo pipefail
 
@@ -56,9 +62,18 @@ INVENTED_OBSERVER="storeproof_no_such_observer"
 ASKER="StoreProofCartPage::showTotals"
 # One more than the budget's four, so the fifth collection is a repeat.
 COLLECTIONS=5
+STORE_VENDOR_DIR="${STORE_PROOF_STORE}/app/code/StoreProof"
+STORE_MODULE="StoreProof_GuardBudgets"
+STORE_MODULE_DIR="${STORE_VENDOR_DIR}/GuardBudgets"
+MODULE_LIST="${STORE_PROOF_STORE}/app/etc/config.php"
+MODULE_LIST_BEFORE="${STORE_PROOF_STORE}/local.d/store-proof-process-guard-config-php.before"
+BUDGETS="${STORE_PROOF_STORE}/local.d/store-proof-process-guard-budgets.php"
+INVENTED_PROCESS="storeproof.invented_export"
 failures=0
 planted=0
 captured=0
+store_module=0
+made_code_dir=0
 
 step() { printf '    %s\n' "$*"; }
 bad() { printf '    FAILED: %s\n' "$*" >&2; failures=$((failures + 1)); }
@@ -167,25 +182,50 @@ remove_planted() {
 		<<< "DELETE FROM core_config_data WHERE scope = 'websites' AND scope_id = 1 AND path = '${PLANTED_PATH}';"
 }
 
-# The captured file is kept when the settings could not be put back, because it
-# is then the only copy of them.
+# The store's own module out again, and the module list exactly as it was
+# before the module was enabled. Only directories this proof made are removed.
+remove_store_module() {
+	cp "$MODULE_LIST_BEFORE" "$MODULE_LIST" || return 1
+	rm -rf "$STORE_VENDOR_DIR"
+	if [ "$made_code_dir" = "1" ]; then
+		rmdir "${STORE_PROOF_STORE}/app/code" 2>/dev/null || true
+	fi
+	$STORE_PROOF_SQL >/dev/null <<< "DELETE FROM setup_module WHERE module = '${STORE_MODULE}';"
+}
+
+# A captured file is kept when what it holds could not be put back, because it
+# is then the only copy.
 cleanup() {
 	local lost=0
+	if [ "$store_module" = "1" ] && ! remove_store_module >/dev/null 2>&1; then
+		lost=1
+		echo "    FAILED: ${STORE_MODULE} could not be taken out; the module list it replaced is kept in ${MODULE_LIST_BEFORE}" >&2
+	else
+		rm -f "$MODULE_LIST_BEFORE"
+	fi
 	if [ "$captured" = "1" ] && ! restore_config >/dev/null 2>&1; then
 		lost=1
 		echo "    FAILED: the store's settings could not be put back; they are kept in ${SAVED}, whose invented ${PLANTED_PATH} row can be left out" >&2
+	else
+		rm -f "$SAVED"
 	fi
 	if [ "$planted" = "1" ]; then
 		remove_planted >/dev/null 2>&1 || true
 	fi
 	$STORE_PROOF_MAGENTO cache:flush < /dev/null >/dev/null 2>&1 || true
-	rm -f "$FLAGS" "$TOTALS"
+	rm -f "$FLAGS" "$TOTALS" "$BUDGETS"
 	if [ "$lost" = "1" ]; then
 		exit 1
 	fi
-	rm -f "$SAVED"
 }
 trap cleanup EXIT
+
+# The store's own module goes under app/code/StoreProof, and the proof removes
+# that directory whole, so it refuses a store that already has one.
+if [ -e "$STORE_VENDOR_DIR" ]; then
+	echo "    this store already has ${STORE_VENDOR_DIR#"${STORE_PROOF_STORE}"/}, which this proof would create and remove, so nothing was touched" >&2
+	exit 1
+fi
 
 # --- the store's own settings, set aside -------------------------------------
 
@@ -720,6 +760,184 @@ grep -qF 'advisory_observers' <<< "$check" || bad "the check did not name the se
 grep -qF 'sales_order_place_after' <<< "$check" || bad "the check did not list the events that are watched"
 
 configure_guard enforcement/advisory_observers=
+
+# --- budgets a store tunes in its own di.xml ----------------------------------
+
+# 2.0.0 took budgets as an array argument, and so does this release. Two things
+# in the field hand the guard that array: a store that tuned a budget in its own
+# di.xml, and a store upgrading in place from 2.0.0, whose cached wiring keeps
+# the old shape until something flushes it. A build that expected an object
+# there failed setup:upgrade and cache:flush on both.
+#
+# bin/store-proof runs the first setup:upgrade before this script starts, so
+# that run is an in-place upgrade only on a store that already carried 2.0.0.
+# This builds the array shape on every store instead: a module of the store's
+# own whose di.xml passes budgets as an array, with one invented process and a
+# looser ceiling on one that ships. setup:upgrade and cache:flush, each with
+# that wiring cached, must pass, and the guard and the report must both use it.
+
+# For the record only: which install the harness did, read from the log it
+# writes under the directory it runs this script in.
+if [ -f dev/var/store-proof/logs/require.log ]; then
+	upgraded="$(grep -o 'Upgrading kingletas/module-process-guard ([^)]*)' dev/var/store-proof/logs/require.log | head -1 || true)"
+	if [ -n "$upgraded" ]; then
+		step "the harness upgraded in place, ${upgraded#Upgrading kingletas/module-process-guard }, and its setup:upgrade passed"
+	else
+		step "the harness installed fresh, so only the module below puts array wiring in front of setup:upgrade"
+	fi
+fi
+
+step "creating ${STORE_MODULE}, whose di.xml tunes budgets as an array"
+cp "$MODULE_LIST" "$MODULE_LIST_BEFORE"
+[ -d "${STORE_PROOF_STORE}/app/code" ] || made_code_dir=1
+store_module=1
+mkdir -p "${STORE_MODULE_DIR}/etc"
+
+cat > "${STORE_MODULE_DIR}/registration.php" <<-'PHP'
+	<?php
+	declare(strict_types=1);
+
+	use Magento\Framework\Component\ComponentRegistrar;
+
+	ComponentRegistrar::register(ComponentRegistrar::MODULE, 'StoreProof_GuardBudgets', __DIR__);
+PHP
+
+cat > "${STORE_MODULE_DIR}/etc/module.xml" <<-'XML'
+	<?xml version="1.0"?>
+	<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	        xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
+	    <module name="StoreProof_GuardBudgets">
+	        <sequence>
+	            <module name="Kingletas_ProcessGuard"/>
+	        </sequence>
+	    </module>
+	</config>
+XML
+
+cat > "${STORE_MODULE_DIR}/etc/di.xml" <<-'XML'
+	<?xml version="1.0"?>
+	<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+	    <virtualType name="StoreProof\GuardBudgets\InventedBudget" type="Kingletas\ProcessGuard\Model\Guard\Budget">
+	        <arguments>
+	            <argument name="warnMilliseconds" xsi:type="number">1234</argument>
+	            <argument name="maxCalls" xsi:type="number">1</argument>
+	        </arguments>
+	    </virtualType>
+	    <virtualType name="StoreProof\GuardBudgets\LooserTotalsBudget" type="Kingletas\ProcessGuard\Model\Guard\Budget">
+	        <arguments>
+	            <argument name="warnMilliseconds" xsi:type="number">1500</argument>
+	            <argument name="maxCalls" xsi:type="number">9</argument>
+	        </arguments>
+	    </virtualType>
+	    <type name="Kingletas\ProcessGuard\Model\Guard\ProcessGuard">
+	        <arguments>
+	            <argument name="budgets" xsi:type="array">
+	                <item name="storeproof.invented_export" xsi:type="object">StoreProof\GuardBudgets\InventedBudget</item>
+	                <item name="quote.collect_totals" xsi:type="object">StoreProof\GuardBudgets\LooserTotalsBudget</item>
+	            </argument>
+	        </arguments>
+	    </type>
+	</config>
+XML
+
+if ! out="$(magento module:enable "$STORE_MODULE")"; then
+	printf '%s\n' "$out" | tail -5 | sed 's/^/      /' >&2
+	bad "module:enable refused ${STORE_MODULE}"
+fi
+
+step "setup:upgrade passes with budgets wired as an array"
+if ! out="$(magento setup:upgrade)"; then
+	printf '%s\n' "$out" | tail -5 | sed 's/^/      /' >&2
+	bad "setup:upgrade failed with ${STORE_MODULE}'s budgets in place"
+fi
+
+step "the report prints the store's budgets over the shipped ones"
+listing="$(magento kingletas:process-guard:policies || true)"
+squeezed="$(tr -s ' ' <<< "$listing")"
+for row in \
+	"| ${INVENTED_PROCESS} | 1234ms | none | 1 | none |" \
+	'| quote.collect_totals | 1500ms | none | 9 | none |' \
+	'| queue.consumer | 120000ms | none | none | 768MB |'; do
+	grep -qF -- "$row" <<< "$squeezed" || bad "the listing has no budget row ${row}"
+done
+
+# The listing above has just built the guard, so the wiring is cached, as it is
+# on a store running 2.0.0 the moment before its upgrade.
+step "setup:upgrade passes again with that wiring cached"
+if ! out="$(magento setup:upgrade)"; then
+	printf '%s\n' "$out" | tail -5 | sed 's/^/      /' >&2
+	bad "setup:upgrade failed with ${STORE_MODULE}'s budgets cached"
+fi
+
+magento kingletas:process-guard:policies >/dev/null || true
+step "cache:flush passes with that wiring cached"
+magento cache:flush >/dev/null || bad "cache:flush failed with ${STORE_MODULE}'s budgets cached"
+
+cat > "$BUDGETS" <<-'PHP'
+	<?php
+	declare(strict_types=1);
+
+	/**
+	 * Runs two processes through the guard Magento builds and reports how often
+	 * each was reported as a repeat.
+	 */
+
+	require '/app/app/bootstrap.php';
+
+	use Kingletas\ProcessGuard\Api\ProcessGuardInterface;
+	use Kingletas\ProcessGuard\Api\ProcessJournalInterface;
+	use Magento\Framework\App\Bootstrap;
+
+	$objectManager = Bootstrap::create(BP, $_SERVER)->getObjectManager();
+	$guard = $objectManager->get(ProcessGuardInterface::class);
+
+	// Past the invented ceiling of one, and five times under the store's nine,
+	// where the shipped ceiling of four would report a repeat.
+	for ($i = 0; $i < 2; $i++) {
+	    $guard->run('storeproof.invented_export', static fn (): bool => true);
+	}
+	for ($i = 0; $i < 5; $i++) {
+	    $guard->run('quote.collect_totals', static fn (): bool => true);
+	}
+
+	$report = $objectManager->get(ProcessJournalInterface::class)->getReport()->toArray();
+
+	printf(
+	    "invented=%d totals=%d\n",
+	    $report['storeproof.invented_export']['outcomes']['repeated'] ?? 0,
+	    $report['quote.collect_totals']['outcomes']['repeated'] ?? 0
+	);
+PHP
+
+step "the guard judges by the store's budgets"
+judged="$($STORE_PROOF_PHP /app/local.d/store-proof-process-guard-budgets.php 2>&1 | tail -1)"
+step "  ${judged}"
+[ "$(field "$judged" invented)" = "1" ] \
+	|| bad "the invented process was reported as a repeat $(field "$judged" invented) time(s) past a ceiling of one, expected once"
+[ "$(field "$judged" totals)" = "0" ] \
+	|| bad "five collections were reported as a repeat under the store's ceiling of nine, so the shipped budget won"
+
+step "taking ${STORE_MODULE} out again"
+remove_store_module || bad "${STORE_MODULE} could not be taken out"
+store_module=0
+magento cache:flush >/dev/null || true
+
+step "the module list is exactly as it was, and the module is gone"
+cmp -s "$MODULE_LIST_BEFORE" "$MODULE_LIST" || bad "app/etc/config.php differs from the copy taken before ${STORE_MODULE} was enabled"
+[ ! -e "$STORE_VENDOR_DIR" ] || bad "${STORE_VENDOR_DIR#"${STORE_PROOF_STORE}"/} is still there"
+left="$(value "SELECT COUNT(*) FROM setup_module WHERE module = '${STORE_MODULE}';")"
+[ "$left" = "0" ] || bad "setup_module still has a row for ${STORE_MODULE}"
+rm -f "$MODULE_LIST_BEFORE"
+
+step "the report is back to the shipped budgets"
+listing="$(magento kingletas:process-guard:policies || true)"
+squeezed="$(tr -s ' ' <<< "$listing")"
+if grep -qF "| ${INVENTED_PROCESS} |" <<< "$squeezed"; then
+	bad "the listing still has ${INVENTED_PROCESS} after ${STORE_MODULE} was taken out"
+fi
+grep -qF -- '| quote.collect_totals | 1500ms | none | 4 | none |' <<< "$squeezed" \
+	|| bad "quote.collect_totals is not back to the shipped ceiling of four"
 
 # --- measurement, switched off -----------------------------------------------
 
