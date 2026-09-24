@@ -17,6 +17,7 @@ use Kingletas\ProcessGuard\Api\ProcessReporterInterface;
 use Kingletas\ProcessGuard\Console\Command\ShowPoliciesCommand;
 use Kingletas\ProcessGuard\Model\Guard\ProcessGuard;
 use Kingletas\ProcessGuard\Model\Journal\ObservationOutcome;
+use Kingletas\ProcessGuard\Model\Journal\ObservationRecorder;
 use Kingletas\ProcessGuard\Model\Report\LogReporter;
 use Magento\Framework\App\Arguments\ArgumentInterpreter;
 use Magento\Framework\App\ObjectManager as AppObjectManager;
@@ -24,6 +25,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Config\FileResolverInterface;
 use Magento\Framework\Config\ScopeInterface;
 use Magento\Framework\Config\ValidationStateInterface;
+use Magento\Framework\Console\CommandListInterface;
 use Magento\Framework\Data\Argument\Interpreter\ArrayType;
 use Magento\Framework\Data\Argument\Interpreter\BaseStringUtils;
 use Magento\Framework\Data\Argument\Interpreter\Boolean;
@@ -44,6 +46,7 @@ use Magento\Framework\ObjectManager\Relations\Runtime as RuntimeRelations;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Stdlib\BooleanUtils;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
 /**
@@ -55,6 +58,13 @@ class BudgetWiringTest extends TestCase
     use ObjectManagerIsolation;
 
     private bool $isolated = false;
+
+    /**
+     * Each object manager's shared instances, held by reference.
+     *
+     * @var array<int, array<string, object>>
+     */
+    private array $sharedInstances = [];
 
     /**
      * What the README says ships, and 2.0.0 shipped the same names.
@@ -98,6 +108,18 @@ class BudgetWiringTest extends TestCase
                     </argument>
                 </arguments>
             </type>
+        </config>
+        XML;
+
+    /**
+     * The console wiring a store's app/etc/di.xml supplies.
+     */
+    private const CONSOLE_DI = <<<'XML'
+        <?xml version="1.0"?>
+        <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+            <preference for="Magento\Framework\Console\CommandListInterface"
+                        type="Magento\Framework\Console\CommandList"/>
         </config>
         XML;
 
@@ -186,6 +208,42 @@ class BudgetWiringTest extends TestCase
         $this->assertContains('| quote.collect_totals | 1500ms | none | 4 | none |', $rows, implode("\n", $rows));
     }
 
+    /**
+     * Magento builds every console command on every bin/magento run, so the
+     * report takes the guard through its generated proxy.
+     */
+    public function testTheReportTakesTheGuardThroughItsProxy(): void
+    {
+        $arguments = $this->diConfig(['etc/di.xml' => $this->shippedDi()])
+            ->getArguments(ShowPoliciesCommand::class);
+
+        $this->assertSame(['instance' => ProcessGuard::class . '\\Proxy'], $arguments['guard'] ?? null);
+    }
+
+    public function testListingTheCommandsBuildsNoGuardAndRunningTheReportBuildsTheOne(): void
+    {
+        $objectManager = $this->objectManager([
+            'app/etc/console.xml' => self::CONSOLE_DI,
+            'etc/di.xml' => $this->shippedDi(),
+        ]);
+
+        $commands = $objectManager->get(CommandListInterface::class)->getCommands();
+
+        $this->assertContainsOnlyInstancesOf(Command::class, $commands);
+        $this->assertArrayHasKey('kingletas_process_guard_policies', $commands);
+        $this->assertFalse($this->hasBuilt($objectManager, ProcessGuard::class), 'listing built the guard');
+        $this->assertFalse($this->hasBuilt($objectManager, ObservationRecorder::class), 'listing built the recorder');
+
+        (new CommandTester($commands['kingletas_process_guard_policies']))->execute([]);
+
+        $this->assertTrue($this->hasBuilt($objectManager, ProcessGuard::class));
+        $this->assertSame(
+            $objectManager->get(ProcessGuardInterface::class),
+            $this->sharedInstances[spl_object_id($objectManager)][ProcessGuard::class],
+            'the report reads the guard that judges, not a second one'
+        );
+    }
+
     private function repeatsAfterFiveCollections(ObjectManagerInterface $objectManager): int
     {
         $guard = $objectManager->get(ProcessGuardInterface::class);
@@ -239,6 +297,53 @@ class BudgetWiringTest extends TestCase
      */
     private function objectManager(array $files): ObjectManagerInterface
     {
+        $definitions = new RuntimeDefinition();
+        $config = $this->diConfig($files, $definitions);
+
+        $eventConfig = $this->createStub(EventConfigData::class);
+        $eventConfig->method('get')->willReturn([]);
+
+        // Keyed by the type the object manager resolves a request to, which for
+        // the reporter is the preference's target.
+        $shared = [
+            ScopeConfigInterface::class => new CountingScopeConfig(['kingletas_processguard/general/enabled' => '1']),
+            LogReporter::class => $this->createStub(ProcessReporterInterface::class),
+            EventConfigData::class => $eventConfig,
+            ScopeInterface::class => $this->createStub(ScopeInterface::class),
+        ];
+
+        $factory = new Developer($config, null, $definitions);
+        $objectManager = new ObjectManager($factory, $config, $shared);
+        $factory->setObjectManager($objectManager);
+        $this->sharedInstances[spl_object_id($objectManager)] = &$shared;
+
+        // Isolated once per test, so tearDown puts back what was there before
+        // the first, however many this test builds.
+        if ($this->isolated) {
+            AppObjectManager::setInstance($objectManager);
+        } else {
+            $this->useObjectManager($objectManager);
+            $this->isolated = true;
+        }
+
+        return $objectManager;
+    }
+
+    /**
+     * Whether this object manager has built a shared instance of the type yet.
+     */
+    private function hasBuilt(ObjectManagerInterface $objectManager, string $type): bool
+    {
+        return isset($this->sharedInstances[spl_object_id($objectManager)][$type]);
+    }
+
+    /**
+     * The files merged by `Reader\Dom` and mapped by `Mapper\Dom`, as a store reads them.
+     *
+     * @param array<string, string> $files Path => di.xml content, merged in order.
+     */
+    private function diConfig(array $files, ?RuntimeDefinition $definitions = null): Config
+    {
         // A store always merges this module's file into others, which is what
         // folds its two <type> blocks for the report into one.
         $base = ['app/etc/di.xml' => '<?xml version="1.0"?><config/>'];
@@ -256,36 +361,10 @@ class BudgetWiringTest extends TestCase
             $validation
         );
 
-        $definitions = new RuntimeDefinition();
-        $config = new Config(new RuntimeRelations(), $definitions);
+        $config = new Config(new RuntimeRelations(), $definitions ?? new RuntimeDefinition());
         $config->extend($reader->read('global'));
 
-        $eventConfig = $this->createStub(EventConfigData::class);
-        $eventConfig->method('get')->willReturn([]);
-
-        // Keyed by the type the object manager resolves a request to, which for
-        // the reporter is the preference's target.
-        $shared = [
-            ScopeConfigInterface::class => new CountingScopeConfig(['kingletas_processguard/general/enabled' => '1']),
-            LogReporter::class => $this->createStub(ProcessReporterInterface::class),
-            EventConfigData::class => $eventConfig,
-            ScopeInterface::class => $this->createStub(ScopeInterface::class),
-        ];
-
-        $factory = new Developer($config, null, $definitions);
-        $objectManager = new ObjectManager($factory, $config, $shared);
-        $factory->setObjectManager($objectManager);
-
-        // Isolated once per test, so tearDown puts back what was there before
-        // the first, however many this test builds.
-        if ($this->isolated) {
-            AppObjectManager::setInstance($objectManager);
-        } else {
-            $this->useObjectManager($objectManager);
-            $this->isolated = true;
-        }
-
-        return $objectManager;
+        return $config;
     }
 
     /**

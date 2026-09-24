@@ -41,9 +41,9 @@ class ShowPoliciesCommand extends Command
     ];
 
     /**
-     * @param ProcessGuard $guard Whose merged budgets the report prints. It is
-     *                            injected by type rather than named in di.xml,
-     *                            so wiring cached before an upgrade reaches it too.
+     * @param ProcessGuard $guard Whose merged budgets the report prints. di.xml
+     *                            hands it the proxy, and wiring with no entry
+     *                            for it still gets the guard by type.
      */
     public function __construct(
         private readonly ObserverPolicyResolverInterface $policyResolver,

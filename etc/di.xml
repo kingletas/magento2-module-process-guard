@@ -218,9 +218,11 @@
     </type>
 
     <!-- The command name is wiring, so `bin/rebrand` rewrites it with the rest. -->
+    <!-- Every bin/magento run builds every command, so the guard is built only when the report runs. -->
     <type name="Kingletas\ProcessGuard\Console\Command\ShowPoliciesCommand">
         <arguments>
             <argument name="name" xsi:type="string">kingletas:process-guard:policies</argument>
+            <argument name="guard" xsi:type="object">Kingletas\ProcessGuard\Model\Guard\ProcessGuard\Proxy</argument>
         </arguments>
     </type>
 

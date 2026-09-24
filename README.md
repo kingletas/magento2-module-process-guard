@@ -188,7 +188,7 @@ make install    # needs repo.magento.com credentials, for magento/framework
 make check
 ```
 
-The coding standard and all four suites — 203 tests, no database and no real clock. Narrow it to one suite with `SUITE`:
+The coding standard and all four suites, with no database and no real clock. Narrow it to one suite with `SUITE`:
 
 ```bash
 make test SUITE=behaviour
