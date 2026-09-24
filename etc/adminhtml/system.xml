@@ -74,8 +74,8 @@
                     <label>Break Down Totals Collection</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment><![CDATA[Off by default. Times each totals collector separately, so a slow
-                        collection names the collector responsible instead of only its own total, and
-                        records which code asked for each collection so a cart that collects totals more
+                        collection names the collector responsible instead of only its own total, in the
+                        collection summary when summaries are switched on, and records which code asked for each collection so a cart that collects totals more
                         often than its budget allows can say who asked for the extra one. Both cost real
                         time: switch it on to answer a question, and off again once you have.]]></comment>
                 </field>

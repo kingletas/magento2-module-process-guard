@@ -10,8 +10,8 @@
 # WHAT THIS IS AIMED AT. The unit suite proves the gate's logic exactly and says
 # itself that it cannot prove the plugin declarations still bind to Magento's
 # signatures. So every claim here is put to Magento: which plugins the container
-# built, what the two console commands print, what the configuration says on a
-# fresh install, and what the guard wrote down while a real cart collected its
+# built, what the two console commands print, what the configuration says with
+# nothing stored, and what the guard wrote down while a real cart collected its
 # totals.
 #
 # Assertions are made in BOTH directions. A breakdown that is always there and
@@ -22,6 +22,17 @@
 # The cart is invented and never saved. An empty cart still runs every totals
 # collector once per address, which is what the breakdown times, so nothing is
 # written to the store for it.
+#
+# THE STORE'S OWN SETTINGS. A store may already carry this module, and its
+# operator may have settings of their own. Every row under the module's section
+# is written to a file before anything else, set aside so the proof reads what
+# the module ships, and put back exactly on the way out, however the run ends.
+# An invented row is planted before the capture, so the restore is proved on
+# every store, including one that had nothing of its own to put back.
+#
+# Settings are written at default scope, which is where the README's config:set
+# writes and the only scope these admin fields show in. They are read back as
+# the effective value on the default store view, which inherits them.
 
 set -euo pipefail
 
@@ -29,12 +40,25 @@ MODULE_NAME="Kingletas_ProcessGuard"
 SECTION="kingletas_processguard"
 FLAGS="${STORE_PROOF_STORE}/local.d/store-proof-process-guard-flags.php"
 TOTALS="${STORE_PROOF_STORE}/local.d/store-proof-process-guard-totals.php"
+SAVED="${STORE_PROOF_STORE}/local.d/store-proof-process-guard-config.sql"
+# Every row under the section and nothing that only shares a prefix with it,
+# which LIKE cannot promise: an underscore there matches any character.
+SECTION_ROWS="LEFT(path, CHAR_LENGTH('${SECTION}/')) = '${SECTION}/'"
+# The paths this proof writes.
+WRITTEN=(general/enabled enforcement/disabled_observers enforcement/advisory_observers
+	enforcement/critical_observers reporting/summaries_enabled reporting/totals_detail_enabled)
+# Planted at a scope other than default, with backslashes in the value as an
+# observer class has, written here as SQL reads it.
+PLANTED_PATH="${SECTION}/storeproof/planted"
+PLANTED_SQL_VALUE='Vendor\\Module\\Observer\\Invented'
 TOTALS_EVENT="sales_quote_collect_totals_before"
 INVENTED_OBSERVER="storeproof_no_such_observer"
 ASKER="StoreProofCartPage::showTotals"
 # One more than the budget's four, so the fifth collection is a repeat.
 COLLECTIONS=5
 failures=0
+planted=0
+captured=0
 
 step() { printf '    %s\n' "$*"; }
 bad() { printf '    FAILED: %s\n' "$*" >&2; failures=$((failures + 1)); }
@@ -42,6 +66,8 @@ bad() { printf '    FAILED: %s\n' "$*" >&2; failures=$((failures + 1)); }
 # Without a terminal on stdin, the store runs bin/magento without one too, so the
 # output carries no carriage returns and a command's own exit status comes back.
 magento() { $STORE_PROOF_MAGENTO "$@" < /dev/null 2>&1 | tr -d '\r'; }
+
+value() { $STORE_PROOF_SQL 2>&1 <<< "$1" | tail -1 | tr -d '[:space:]'; }
 
 # Reads key=value out of a report line without a regex, so no sed dialect gets
 # to decide whether a proof passes.
@@ -55,17 +81,19 @@ field() {
 	return 1
 }
 
-# Sets each setting=value below this module's section, or removes the row when
-# the value is empty so the XML default applies again, then flushes the cache,
-# which is where the README says a change takes effect.
+# Sets each setting=value below this module's section at default scope, or
+# removes that row when the value is empty so the XML default applies again, then
+# flushes the cache, which is where the README says a change takes effect.
 configure_guard() {
 	local pair path
 	for pair in "$@"; do
 		path="${SECTION}/${pair%%=*}"
 		if [ -n "${pair#*=}" ]; then
-			magento config:set "$path" "${pair#*=}" >/dev/null || bad "config:set refused ${path}"
+			magento config:set --scope=default "$path" "${pair#*=}" >/dev/null \
+				|| bad "config:set refused ${path}"
 		else
-			$STORE_PROOF_SQL >/dev/null <<< "DELETE FROM core_config_data WHERE path = '${path}';" \
+			$STORE_PROOF_SQL >/dev/null \
+				<<< "DELETE FROM core_config_data WHERE path = '${path}' AND scope = 'default' AND scope_id = 0;" \
 				|| bad "could not remove ${path}"
 		fi
 	done
@@ -92,21 +120,101 @@ collect() {
 	tail -1 <<< "$out"
 }
 
-cleanup() {
-	$STORE_PROOF_SQL >/dev/null 2>&1 <<-SQL || true
-		DELETE FROM core_config_data WHERE path IN (
-			'${SECTION}/general/enabled',
-			'${SECTION}/enforcement/disabled_observers',
-			'${SECTION}/enforcement/advisory_observers',
-			'${SECTION}/enforcement/critical_observers',
-			'${SECTION}/reporting/summaries_enabled',
-			'${SECTION}/reporting/totals_detail_enabled'
-		);
+# The section's rows as one value: how many, and an order-free hash over every
+# scope, scope id, path and value, so what is put back can be compared with what
+# was found.
+section_fingerprint() {
+	value "SELECT CONCAT(COUNT(*), ':', IFNULL(BIT_XOR(CAST(CONV(SUBSTRING(MD5(
+		CONCAT_WS(0x1f, scope, scope_id, path, IFNULL(HEX(value), 'NULL'))), 1, 16), 16, 10) AS UNSIGNED)), 0))
+		FROM core_config_data WHERE ${SECTION_ROWS};"
+}
+
+path_rows() { value "SELECT COUNT(*) FROM core_config_data WHERE path = '${SECTION}/$1';"; }
+
+planted_rows() {
+	value "SELECT COUNT(*) FROM core_config_data
+		WHERE scope = 'websites' AND scope_id = 1 AND path = '${PLANTED_PATH}' AND value = '${PLANTED_SQL_VALUE}';"
+}
+
+# Each row comes back from MariaDB as the INSERT that recreates it, every field
+# hex-encoded, because the client escapes backslashes in what it prints and
+# observer class names are full of them.
+capture_config() {
+	local rows
+	rows="$($STORE_PROOF_SQL <<-SQL
+		SELECT CONCAT('INSERT INTO core_config_data (scope, scope_id, path, value) VALUES (UNHEX(''',
+			HEX(scope), '''), ', scope_id, ', UNHEX(''', HEX(path), '''), ',
+			IF(value IS NULL, 'NULL', CONCAT('UNHEX(''', HEX(value), ''')')), ');') AS row_sql
+		FROM core_config_data WHERE ${SECTION_ROWS} ORDER BY config_id;
 	SQL
+	)" || return 1
+	grep '^INSERT INTO ' <<< "$rows" > "$SAVED" || true
+}
+
+# Everything under the section goes, then every captured row returns, in one
+# transaction, so an insert that fails leaves the rows it found rather than none.
+restore_config() {
+	{
+		echo "START TRANSACTION;"
+		echo "DELETE FROM core_config_data WHERE ${SECTION_ROWS};"
+		cat "$SAVED"
+		echo "COMMIT;"
+	} | $STORE_PROOF_SQL >/dev/null
+}
+
+remove_planted() {
+	$STORE_PROOF_SQL >/dev/null \
+		<<< "DELETE FROM core_config_data WHERE scope = 'websites' AND scope_id = 1 AND path = '${PLANTED_PATH}';"
+}
+
+# The captured file is kept when the settings could not be put back, because it
+# is then the only copy of them.
+cleanup() {
+	local lost=0
+	if [ "$captured" = "1" ] && ! restore_config >/dev/null 2>&1; then
+		lost=1
+		echo "    FAILED: the store's settings could not be put back; they are kept in ${SAVED}, whose invented ${PLANTED_PATH} row can be left out" >&2
+	fi
+	if [ "$planted" = "1" ]; then
+		remove_planted >/dev/null 2>&1 || true
+	fi
 	$STORE_PROOF_MAGENTO cache:flush < /dev/null >/dev/null 2>&1 || true
 	rm -f "$FLAGS" "$TOTALS"
+	if [ "$lost" = "1" ]; then
+		exit 1
+	fi
+	rm -f "$SAVED"
 }
 trap cleanup EXIT
+
+# --- the store's own settings, set aside -------------------------------------
+
+step "planting an invented setting, so the restore has something to put back"
+planted=1
+$STORE_PROOF_SQL >/dev/null <<< "INSERT INTO core_config_data (scope, scope_id, path, value)
+	VALUES ('websites', 1, '${PLANTED_PATH}', '${PLANTED_SQL_VALUE}')
+	ON DUPLICATE KEY UPDATE value = VALUES(value);" \
+	|| { echo "    could not plant ${PLANTED_PATH}" >&2; exit 1; }
+
+step "capturing every setting under ${SECTION}"
+before="$(section_fingerprint)"
+declare -A rows_before=()
+for path in "${WRITTEN[@]}"; do
+	rows_before[$path]="$(path_rows "$path")"
+done
+capture_config || { echo "    could not read the settings under ${SECTION}, so nothing was set aside" >&2; exit 1; }
+captured_rows="$(grep -c '^INSERT INTO ' "$SAVED" || true)"
+
+# A capture that disagrees with the count is not a copy, and setting rows aside
+# on the strength of it could lose one.
+if [ -z "$before" ] || [ "${before%%:*}" != "$captured_rows" ]; then
+	echo "    the section holds '${before%%:*}' row(s) and ${captured_rows} were captured, so nothing was set aside" >&2
+	exit 1
+fi
+step "  ${captured_rows} row(s) captured and set aside until the end"
+captured=1
+$STORE_PROOF_SQL >/dev/null <<< "DELETE FROM core_config_data WHERE ${SECTION_ROWS};"
+magento cache:flush >/dev/null
 
 # --- what installing it wired ------------------------------------------------
 
@@ -143,7 +251,7 @@ for seam in "${seams[@]}"; do
 	grep -qF "$plugin" <<< "$wiring" || bad "the container built ${type} without ${plugin}"
 done
 
-# --- a fresh install changes nothing about what runs -------------------------
+# --- the shipped defaults change nothing about what runs --------------------
 
 # The README's safety claim: measurement is on, because with nothing classified
 # every observer still runs unchanged, and everything that costs time or changes
@@ -182,7 +290,7 @@ cat > "$FLAGS" <<-'PHP'
 	}
 PHP
 
-step "on a fresh install measurement is on and everything else is off"
+step "with nothing stored, measurement is on and everything else is off"
 expected=(
 	flag:general/enabled=1
 	flag:enforcement/shedding_enabled=0
@@ -203,11 +311,11 @@ for entry in "${expected[@]}"; do
 	case "$(grep "^${path}=" <<< "$flags" || true)" in
 		"${path}=${entry##*=}") : ;;
 		"") bad "Magento said nothing about ${path}" ;;
-		*) bad "${path} is $(grep "^${path}=" <<< "$flags" | cut -d= -f2) after a fresh install, expected ${entry##*=}" ;;
+		*) bad "${path} is $(grep "^${path}=" <<< "$flags" | cut -d= -f2) with nothing stored, expected ${entry##*=}" ;;
 	esac
 done
 
-# --- the two console commands, on a fresh install ----------------------------
+# --- the two console commands, with nothing stored ---------------------------
 
 step "the policy listing runs in the storefront area"
 if policies="$(magento kingletas:process-guard:policies --area=frontend)"; then
@@ -251,7 +359,7 @@ done
 # Nothing classified means every observer is measured and nothing else.
 step "no observer on any guarded event is classified"
 classified="$(grep -cE 'never run it|contain failures|never skip or contain' <<< "$policies" || true)"
-[ "$classified" = "0" ] || bad "${classified} observer row(s) are classified on a fresh install"
+[ "$classified" = "0" ] || bad "${classified} observer row(s) are classified with nothing stored"
 
 step "an area that does not exist is refused"
 if magento kingletas:process-guard:policies --area=nowhere >/dev/null; then
@@ -422,7 +530,7 @@ cat > "$TOTALS" <<-'PHP'
 	printf(
 	    "collections=%d error=%s calls=%d repeated=%d observers=%d first=%s gated=%d disabled=%d killedran=%d"
 	    . " collectors=%d breakdown=%d missing=%d interceptors=%d asked=%s repeatasked=%s processes=%d"
-	    . " logfile=%s repeatlogged=%d repeatloggedasked=%d summarised=%d\n",
+	    . " logfile=%s repeatlogged=%d repeatloggedasked=%d summarised=%d collectorlogged=%d\n",
 	    $collections,
 	    $error,
 	    $report['quote.collect_totals']['calls'] ?? 0,
@@ -442,7 +550,8 @@ cat > "$TOTALS" <<-'PHP'
 	    $grown === [] ? '-' : implode(',', $grown),
 	    $count($repeatLine),
 	    $count($repeatLine, 'StoreProofCartPage::showTotals'),
-	    $count('quote.collect_totals finished:', 'totals.')
+	    $count('quote.collect_totals finished:', 'totals.'),
+	    $count('totals.')
 	);
 PHP
 
@@ -532,8 +641,15 @@ step "the repeat names who asked for the extra collection, in the log too"
 [ "$(field "$detail" repeatloggedasked)" = "1" ] \
 	|| bad "the logged repeat does not name ${ASKER}"
 
-# The breakdown is kept in the journal. What carries it to the log is the
-# per-process summary, which is its own switch.
+# The breakdown is kept in the journal, and what carries it to the log is the
+# collection summary, which is its own switch. The CHANGELOG and the admin
+# comment say so, so with summaries off no log line names a collector.
+step "with summaries off, the breakdown reaches no log line"
+[ "$(field "$detail" summarised)" = "0" ] \
+	|| bad "$(field "$detail" summarised) summary line(s) were logged with summaries off"
+[ "$(field "$detail" collectorlogged)" = "0" ] \
+	|| bad "$(field "$detail" collectorlogged) log line(s) named a collector with summaries off"
+
 step "collecting again with the breakdown and summaries on"
 configure_guard reporting/summaries_enabled=1
 summarised="$(collect)"
@@ -626,6 +742,34 @@ step "the listing says the guard is switched off"
 listing="$(magento kingletas:process-guard:policies || true)"
 grep -qF 'The guard is switched off' <<< "$listing" \
 	|| bad "the listing does not say the guard is switched off"
+
+# --- the store's own settings, put back --------------------------------------
+
+step "putting the store's settings back"
+restore_config || bad "the captured settings could not be put back"
+magento cache:flush >/dev/null || true
+
+step "every row the section held came back with its value, and no other row is left"
+[ "$(section_fingerprint)" = "$before" ] \
+	|| bad "the section's rows differ from the ones captured at the start"
+
+step "the invented row came back at its own scope, backslashes intact"
+[ "$(planted_rows)" = "1" ] || bad "${PLANTED_PATH} did not come back with its value"
+
+step "each path the proof wrote holds as many rows as it did before"
+for path in "${WRITTEN[@]}"; do
+	after="$(path_rows "$path")"
+	[ "$after" = "${rows_before[$path]}" ] \
+		|| bad "${SECTION}/${path} had ${rows_before[$path]} row(s) and now has ${after}"
+done
+
+# Put back and checked, so the exit has nothing left to restore.
+captured=0
+step "the invented row is removed again"
+remove_planted || bad "the invented ${PLANTED_PATH} could not be removed"
+left="$(value "SELECT COUNT(*) FROM core_config_data WHERE path = '${PLANTED_PATH}';")"
+[ "$left" = "0" ] || bad "${left} invented ${PLANTED_PATH} row(s) are still there"
+planted=0
 
 # --- verdict -----------------------------------------------------------------
 

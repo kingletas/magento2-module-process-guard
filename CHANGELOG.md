@@ -13,7 +13,7 @@ Documentation only. `docs/recommended-settings.md` covers the totals breakdown
 setting and the new check command, and says which of the two console commands
 can gate a deploy. Nothing about how the module behaves changed.
 
-Totals collection can now be broken down into the collectors it is made of. `Break Down Totals Collection` in the Reporting section times each collector separately, so a report that said `quote.collect_totals` was slow now says which collector spent the time. One slow collector can account for most of a collection, and until now nothing in Magento could say which one.
+Totals collection can now be broken down into the collectors it is made of. `Break Down Totals Collection` in the Reporting section times each collector separately, so a report that said `quote.collect_totals` was slow now says which collector spent the time, in the collection summary when summaries are switched on. One slow collector can account for most of a collection, and until now nothing in Magento could say which one.
 
 The same setting records the code that asked for each collection. The guard already reported `5 calls, budget allows 4`; it can now name the plugin that asked for the fifth, which is the difference between knowing there is a redundant collection and being able to go and remove it. Both cost real time and both are off by default.
 
