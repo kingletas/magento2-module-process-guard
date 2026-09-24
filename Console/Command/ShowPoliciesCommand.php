@@ -12,7 +12,7 @@ namespace Kingletas\ProcessGuard\Console\Command;
 use Kingletas\ProcessGuard\Api\ObserverPolicy;
 use Kingletas\ProcessGuard\Api\ObserverPolicyResolverInterface;
 use Kingletas\ProcessGuard\Model\Config;
-use Kingletas\ProcessGuard\Model\Guard\BudgetDirectory;
+use Kingletas\ProcessGuard\Model\Guard\ProcessGuard;
 use Magento\Framework\App\Area;
 use Magento\Framework\Config\ScopeInterface;
 use Magento\Framework\Event\Config\Data as EventConfigData;
@@ -40,12 +40,17 @@ class ShowPoliciesCommand extends Command
         Area::AREA_WEBAPI_REST,
     ];
 
+    /**
+     * @param ProcessGuard $guard Whose merged budgets the report prints. It is
+     *                            injected by type rather than named in di.xml,
+     *                            so wiring cached before an upgrade reaches it too.
+     */
     public function __construct(
         private readonly ObserverPolicyResolverInterface $policyResolver,
         private readonly EventConfigData $eventConfig,
         private readonly ScopeInterface $configScope,
         private readonly Config $config,
-        private readonly ?BudgetDirectory $budgets = null,
+        private readonly ProcessGuard $guard,
         ?string $name = null
     ) {
         parent::__construct($name);
@@ -171,7 +176,8 @@ class ShowPoliciesCommand extends Command
      */
     private function printBudgets(OutputInterface $output): void
     {
-        $budgets = $this->budgets?->all() ?? [];
+        // The guard's own view, so the report and the guard never disagree.
+        $budgets = $this->guard->getBudgets()->all();
 
         $output->writeln('');
 

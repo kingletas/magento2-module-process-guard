@@ -123,6 +123,24 @@ An incident switch belongs in configuration. A standing decision belongs in `di.
 
 Two things in that table are decisions rather than gaps. **`quote.collect_totals` has no trip value on purpose**, because a totals collection cannot be skipped: the answer would be wrong prices. And **a process with no budget is unlimited on purpose**, because inventing a threshold nobody has measured is how a monitoring tool becomes the incident.
 
+Tune one in your own module's `di.xml`, on the guard's `budgets` argument. An entry replaces the shipped budget of the same name, a new name adds one, and `bin/magento kingletas:process-guard:policies` prints the result:
+
+```xml
+<virtualType name="Vendor\Module\Model\TotalsBudget" type="Kingletas\ProcessGuard\Model\Guard\Budget">
+    <arguments>
+        <argument name="warnMilliseconds" xsi:type="number">1500</argument>
+        <argument name="maxCalls" xsi:type="number">6</argument>
+    </arguments>
+</virtualType>
+<type name="Kingletas\ProcessGuard\Model\Guard\ProcessGuard">
+    <arguments>
+        <argument name="budgets" xsi:type="array">
+            <item name="quote.collect_totals" xsi:type="object">Vendor\Module\Model\TotalsBudget</item>
+        </argument>
+    </arguments>
+</type>
+```
+
 When you do tune them, set `warn` near the 95th percentile of your own measurements and `trip` at a number you would rather fail than exceed. `warn` is clamped to `min(warn, trip)`, so nothing can trip without having been warned about first.
 
 A budget nobody has calibrated produces warnings people learn to ignore, which is worse than no budget at all.

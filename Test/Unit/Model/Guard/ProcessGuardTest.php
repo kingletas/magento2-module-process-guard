@@ -62,6 +62,42 @@ class ProcessGuardTest extends TestCase
         $this->config->method('isSummaryReportingEnabled')->willReturn(false);
     }
 
+    /**
+     * The constructor 2.0.0 shipped: budgets as an array in fourth place.
+     */
+    public function testBudgetsPassedAsAnArrayAreStillJudged(): void
+    {
+        $guard = new ProcessGuard(
+            $this->clock,
+            new ObservationRecorder($this->journal, $this->reporter),
+            $this->config,
+            [self::PROCESS => new Budget(maxCalls: 1)]
+        );
+
+        $guard->run(self::PROCESS, static fn (): bool => true);
+        $guard->run(self::PROCESS, static fn (): bool => true);
+
+        $this->assertSame(1, $this->countReported(ObservationOutcome::Repeated));
+    }
+
+    public function testAnArrayBudgetOverridesTheDirectorysBudgetOfTheSameName(): void
+    {
+        $guard = new ProcessGuard(
+            $this->clock,
+            new ObservationRecorder($this->journal, $this->reporter),
+            $this->config,
+            [self::PROCESS => new Budget(maxCalls: 9)],
+            new BudgetDirectory([self::PROCESS => new Budget(maxCalls: 1), 'other' => new Budget(maxCalls: 2)])
+        );
+
+        $guard->run(self::PROCESS, static fn (): bool => true);
+        $guard->run(self::PROCESS, static fn (): bool => true);
+
+        $this->assertSame(0, $this->countReported(ObservationOutcome::Repeated));
+        $this->assertSame(9, $guard->getBudgets()->get(self::PROCESS)?->getMaxCalls());
+        $this->assertSame(2, $guard->getBudgets()->get('other')?->getMaxCalls());
+    }
+
     public function testReturnsWhateverTheWorkReturns(): void
     {
         $this->assertSame('result', $this->guard()->run(self::PROCESS, static fn (): string => 'result'));
@@ -80,7 +116,7 @@ class ProcessGuardTest extends TestCase
             $this->clock,
             new ObservationRecorder($this->journal, $this->reporter),
             $config,
-            new BudgetDirectory([self::PROCESS => new Budget(warnMilliseconds: 1)])
+            budgetDirectory: new BudgetDirectory([self::PROCESS => new Budget(warnMilliseconds: 1)])
         );
 
         $this->assertSame('result', $guard->run(self::PROCESS, static fn (): string => 'result'));
@@ -266,7 +302,7 @@ class ProcessGuardTest extends TestCase
             $this->clock,
             new ObservationRecorder($this->journal, $this->reporter),
             $config,
-            new BudgetDirectory()
+            budgetDirectory: new BudgetDirectory()
         );
 
         $guard->run(self::PROCESS, function () use ($guard): bool {
@@ -406,7 +442,7 @@ class ProcessGuardTest extends TestCase
             $this->clock,
             new ObservationRecorder($this->journal, $this->reporter),
             $config,
-            new BudgetDirectory([])
+            budgetDirectory: new BudgetDirectory([])
         );
 
         $guard->begin('queue.message');
@@ -428,7 +464,7 @@ class ProcessGuardTest extends TestCase
             $this->clock,
             new ObservationRecorder($this->journal, $this->reporter),
             $this->config,
-            new BudgetDirectory($budget === null ? [] : [self::PROCESS => $budget])
+            budgetDirectory: new BudgetDirectory($budget === null ? [] : [self::PROCESS => $budget])
         );
     }
 }

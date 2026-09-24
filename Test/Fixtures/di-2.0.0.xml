@@ -85,9 +85,7 @@
         </arguments>
     </virtualType>
 
-    <!-- One directory of budgets, so the guard and the report can never disagree. -->
-    <virtualType name="Kingletas\ProcessGuard\Model\Guard\Budgets"
-                 type="Kingletas\ProcessGuard\Model\Guard\BudgetDirectory">
+    <type name="Kingletas\ProcessGuard\Model\Guard\ProcessGuard">
         <arguments>
             <argument name="budgets" xsi:type="array">
                 <item name="event.sales_model_service_quote_submit_before" xsi:type="object">Kingletas\ProcessGuard\Model\Guard\OrderPlacementBudget</item>
@@ -100,17 +98,6 @@
                 <item name="catalog.product_save" xsi:type="object">Kingletas\ProcessGuard\Model\Guard\ProductSaveBudget</item>
                 <item name="queue.consumer" xsi:type="object">Kingletas\ProcessGuard\Model\Guard\ConsumerBudget</item>
             </argument>
-        </arguments>
-    </virtualType>
-
-    <!--
-        The shipped budgets are their own argument, so `budgets` stays an array:
-        a store's own di.xml adds or replaces a budget there by name, and wiring
-        cached by an earlier release still fits it.
-    -->
-    <type name="Kingletas\ProcessGuard\Model\Guard\ProcessGuard">
-        <arguments>
-            <argument name="budgetDirectory" xsi:type="object">Kingletas\ProcessGuard\Model\Guard\Budgets</argument>
         </arguments>
     </type>
 
@@ -168,55 +155,6 @@
                 sortOrder="10"/>
     </type>
 
-    <!--
-        Where one unit of work ends. A consumer's own budget covers the whole
-        consumer; everything inside it is judged one message at a time.
-    -->
-    <preference for="Kingletas\ProcessGuard\Api\UnitOfWorkInterface"
-                type="Kingletas\ProcessGuard\Model\Guard\ProcessGuard"/>
-
-    <type name="Magento\Framework\MessageQueue\CallbackInvokerInterface">
-        <plugin name="kingletas_process_guard_message_unit"
-                type="Kingletas\ProcessGuard\Plugin\MessageQueue\PerMessageUnit"
-                sortOrder="5"/>
-    </type>
-
-    <type name="Magento\Framework\MessageQueue\QueueInterface">
-        <plugin name="kingletas_process_guard_subscribe_unit"
-                type="Kingletas\ProcessGuard\Plugin\MessageQueue\PerMessageUnit"
-                sortOrder="5"/>
-    </type>
-
-    <type name="Magento\Cron\Model\Schedule">
-        <plugin name="kingletas_process_guard_cron_unit"
-                type="Kingletas\ProcessGuard\Plugin\Cron\PerJobUnit"
-                sortOrder="5"/>
-    </type>
-
-    <!--
-        The breakdown of a collection. Off by default: this is one plugin call
-        per collector per collection, and it answers a question nobody has
-        until a collection is slow.
-    -->
-    <type name="Magento\Quote\Model\Quote\Address\Total\CollectorInterface">
-        <plugin name="kingletas_process_guard_total_collector"
-                type="Kingletas\ProcessGuard\Plugin\Quote\GuardedTotalCollector"
-                sortOrder="10"/>
-    </type>
-
-    <!-- Frames that are never the answer to "who asked for this". -->
-    <type name="Kingletas\ProcessGuard\Model\Guard\CallerResolver">
-        <arguments>
-            <argument name="ignoredPrefixes" xsi:type="array">
-                <item name="guard" xsi:type="string">Kingletas\ProcessGuard</item>
-                <item name="interception" xsi:type="string">Magento\Framework\Interception</item>
-                <item name="totals" xsi:type="string">Magento\Quote\Model\Quote\TotalsCollector</item>
-                <!-- Always the immediate caller, so it answers nothing. -->
-                <item name="quote" xsi:type="string">Magento\Quote\Model\Quote::collectTotals</item>
-            </argument>
-        </arguments>
-    </type>
-
     <!-- The command name is wiring, so `bin/rebrand` rewrites it with the rest. -->
     <type name="Kingletas\ProcessGuard\Console\Command\ShowPoliciesCommand">
         <arguments>
@@ -224,17 +162,10 @@
         </arguments>
     </type>
 
-    <type name="Kingletas\ProcessGuard\Console\Command\CheckConfigurationCommand">
-        <arguments>
-            <argument name="name" xsi:type="string">kingletas:process-guard:check</argument>
-        </arguments>
-    </type>
-
     <type name="Magento\Framework\Console\CommandListInterface">
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="kingletas_process_guard_policies" xsi:type="object">Kingletas\ProcessGuard\Console\Command\ShowPoliciesCommand</item>
-                <item name="kingletas_process_guard_check" xsi:type="object">Kingletas\ProcessGuard\Console\Command\CheckConfigurationCommand</item>
             </argument>
         </arguments>
     </type>

@@ -42,12 +42,35 @@ class ProcessGuard implements ProcessGuardInterface, UnitOfWorkInterface
     /** What is being accounted for right now, named by whoever began it. */
     private string $unit = '';
 
+    /** The two budget arguments merged, settled on first use. */
+    private ?BudgetDirectory $merged = null;
+
+    /**
+     * @param array<string, Budget> $budgets         Process name => budget. A process
+     *                                               that is not in here has no limits,
+     *                                               which is deliberate: see Budget.
+     *                                               Each entry replaces the directory's
+     *                                               budget of the same name, so a store
+     *                                               tunes a budget here in its own di.xml.
+     * @param BudgetDirectory|null  $budgetDirectory The budgets this module ships, which
+     *                                               the policy report reads through
+     *                                               getBudgets().
+     */
     public function __construct(
         private readonly ClockInterface $clock,
         private readonly ObservationRecorder $recorder,
         private readonly Config $config,
-        private readonly ?BudgetDirectory $budgets = null
+        private readonly array $budgets = [],
+        private readonly ?BudgetDirectory $budgetDirectory = null
     ) {
+    }
+
+    /**
+     * Every budget this guard judges a process against.
+     */
+    public function getBudgets(): BudgetDirectory
+    {
+        return $this->merged ??= ($this->budgetDirectory ?? new BudgetDirectory())->withOverrides($this->budgets);
     }
 
     /**
@@ -306,6 +329,6 @@ class ProcessGuard implements ProcessGuardInterface, UnitOfWorkInterface
 
     private function budgetFor(string $process): ?Budget
     {
-        return $this->budgets?->get($process);
+        return $this->getBudgets()->get($process);
     }
 }

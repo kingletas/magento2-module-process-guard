@@ -250,7 +250,9 @@ class IncidentTest extends TestCase
             $clock,
             $recorder,
             $config,
-            new BudgetDirectory([self::PROCESS => new Budget(warnMilliseconds: 1000, tripMilliseconds: 4000)])
+            budgetDirectory: new BudgetDirectory([
+                self::PROCESS => new Budget(warnMilliseconds: 1000, tripMilliseconds: 4000),
+            ])
         );
 
         $invoker = new GuardedInvoker(

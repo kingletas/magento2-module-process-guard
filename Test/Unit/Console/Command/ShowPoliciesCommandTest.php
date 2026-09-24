@@ -11,10 +11,15 @@ namespace Kingletas\ProcessGuard\Test\Unit\Console\Command;
 
 use Kingletas\ProcessGuard\Api\ObserverPolicy;
 use Kingletas\ProcessGuard\Api\ObserverPolicyResolverInterface;
+use Kingletas\ProcessGuard\Api\ProcessReporterInterface;
 use Kingletas\ProcessGuard\Console\Command\ShowPoliciesCommand;
 use Kingletas\ProcessGuard\Model\Config;
 use Kingletas\ProcessGuard\Model\Guard\Budget;
 use Kingletas\ProcessGuard\Model\Guard\BudgetDirectory;
+use Kingletas\ProcessGuard\Model\Guard\ProcessGuard;
+use Kingletas\ProcessGuard\Model\Journal\ObservationRecorder;
+use Kingletas\ProcessGuard\Model\Journal\RequestJournal;
+use Kingletas\ProcessGuard\Test\Support\FakeClock;
 use Magento\Framework\Config\ScopeInterface;
 use Magento\Framework\Event\Config\Data as EventConfigData;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -203,12 +208,20 @@ class ShowPoliciesCommandTest extends TestCase
         ?EventConfigData $eventConfig = null,
         ?BudgetDirectory $budgets = null
     ): CommandTester {
+        // The report prints the guard's budgets, so it is handed a real guard.
+        $guard = new ProcessGuard(
+            new FakeClock(),
+            new ObservationRecorder(new RequestJournal(), $this->createStub(ProcessReporterInterface::class)),
+            $config ?? $this->config,
+            budgetDirectory: $budgets
+        );
+
         $command = new ShowPoliciesCommand(
             $resolver ?? $this->policyResolver,
             $eventConfig ?? $this->eventConfig,
             $this->configScope,
             $config ?? $this->config,
-            $budgets
+            $guard
         );
 
         $tester = new CommandTester($command);

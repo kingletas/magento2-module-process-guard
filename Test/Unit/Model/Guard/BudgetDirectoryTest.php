@@ -41,4 +41,30 @@ class BudgetDirectoryTest extends TestCase
 
         $this->assertSame(['b', 'a'], array_keys((new BudgetDirectory($budgets))->all()));
     }
+
+    public function testAnOverrideReplacesTheBudgetOfTheSameNameAndKeepsTheRest(): void
+    {
+        $shipped = new Budget(maxCalls: 4);
+        $kept = new Budget(warnMilliseconds: 10);
+        $tuned = new Budget(maxCalls: 9);
+        $added = new Budget(warnMilliseconds: 20);
+
+        $merged = (new BudgetDirectory(['a' => $shipped, 'b' => $kept]))
+            ->withOverrides(['a' => $tuned, 'c' => $added]);
+
+        $this->assertSame(['a' => $tuned, 'b' => $kept, 'c' => $added], $merged->all());
+    }
+
+    /**
+     * A mistyped override leaves the shipped budget in place rather than
+     * quietly lifting every limit on the process.
+     */
+    public function testAnOverrideThatIsNotABudgetKeepsTheBudgetItNamed(): void
+    {
+        $shipped = new Budget(maxCalls: 4);
+
+        $merged = (new BudgetDirectory(['a' => $shipped]))->withOverrides(['a' => 'not a budget']);
+
+        $this->assertSame($shipped, $merged->get('a'));
+    }
 }

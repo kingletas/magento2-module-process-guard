@@ -23,6 +23,8 @@ Accounting now resets at the boundary of a unit of work rather than running for 
 
 `bin/magento kingletas:process-guard:policies` now prints the budget every guarded process is judged against: its warn and trip times, its call ceiling and its memory ceiling. Those numbers only existed in `di.xml`, so an operator who read `over budget` in the log had to open a file under `vendor/` to find out what the budget was, while the screen that tells them to run that command promised a decision taken against evidence.
 
+Budgets are configured exactly as they were in 2.0.0: the `budgets` array argument of `ProcessGuard`, where a store's own `di.xml` can add a budget or replace a shipped one by name. The shipped budgets now arrive through a separate `budgetDirectory` argument, each entry in `budgets` replaces the shipped budget of the same name, and the policy report prints the same merged set the guard judges against. A store upgrading in place from 2.0.0 keeps working, both while its cached wiring still has the old shape and with any budgets it tuned itself.
+
 An advisory observer is no longer described as skipped while shedding is off. The row said `contain failures, skip when over budget` whatever the setting, and with shedding off an advisory observer always runs. It now says which of the two is true.
 
 The Measurement screen and the README named the report as `var/log/kingletas/process_guard.log`. The handler rotates daily, so that file never exists; both now name `process_guard-<date>.log`.

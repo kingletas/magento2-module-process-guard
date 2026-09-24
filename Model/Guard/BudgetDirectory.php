@@ -37,4 +37,19 @@ class BudgetDirectory
     {
         return array_filter($this->budgets, static fn ($budget): bool => $budget instanceof Budget);
     }
+
+    /**
+     * A directory with these budgets laid over this one, each replacing the
+     * entry of the same name. Anything that is not a budget is left out, so a
+     * mistyped override keeps the budget it meant to replace.
+     *
+     * @param array<string, mixed> $budgets Process name => budget.
+     */
+    public function withOverrides(array $budgets): self
+    {
+        return new self(array_replace(
+            $this->all(),
+            array_filter($budgets, static fn ($budget): bool => $budget instanceof Budget)
+        ));
+    }
 }
