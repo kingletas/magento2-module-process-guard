@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.1.0 - 2026-09-24
 
 Tooling only. PHPStan and PHPMD pass. The caller resolver reads a backtrace
 frame's function name directly, since PHP always sets it, and two offsets are
